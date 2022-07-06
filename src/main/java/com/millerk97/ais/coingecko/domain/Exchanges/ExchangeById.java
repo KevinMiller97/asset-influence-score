@@ -16,5 +16,4 @@ public class ExchangeById extends Exchanges {
     private List<Ticker> tickers;
     @JsonProperty("status_updates")
     private List<Object> statusUpdates;
-
 }

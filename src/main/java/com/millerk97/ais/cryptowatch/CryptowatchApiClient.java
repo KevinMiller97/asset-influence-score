@@ -1,31 +1,17 @@
 package com.millerk97.ais.cryptowatch;
 
-import com.millerk97.ais.coingecko.domain.Exchanges.ExchangeById;
-import com.millerk97.ais.coingecko.domain.Exchanges.Exchanges;
-import com.millerk97.ais.coingecko.domain.Exchanges.ExchangesList;
-import com.millerk97.ais.coingecko.domain.Exchanges.ExchangesTickersById;
-import com.millerk97.ais.coingecko.domain.Ping;
+import com.millerk97.ais.cryptowatch.domain.Exchange.ExchangeList;
+import com.millerk97.ais.cryptowatch.domain.OHLC;
+import com.millerk97.ais.cryptowatch.domain.market.MarketList;
 
 import java.util.List;
 
 public interface CryptowatchApiClient {
 
-    Ping ping();
+    List<OHLC> getOHLC(String exchange, String pair, Integer before, Integer after);
 
-    List<Exchanges> getExchanges();
+    ExchangeList getExchanges();
 
-    List<Exchanges> getExchanges(int perPage, int page);
-
-    List<ExchangesList> getExchangesList();
-
-    ExchangeById getExchangesById(String id);
-
-    ExchangesTickersById getExchangesTickersById(String id);
-
-    ExchangesTickersById getExchangesTickersById(String id, String coinIds, Integer page, String order);
-
-    List<List<String>> getExchangesVolumeChart(String id, Integer days);
-
-    void shutdown();
+    MarketList getMarkets();
 
 }

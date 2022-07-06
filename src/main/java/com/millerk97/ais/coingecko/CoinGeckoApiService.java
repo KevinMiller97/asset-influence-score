@@ -1,5 +1,6 @@
 package com.millerk97.ais.coingecko;
 
+import com.millerk97.ais.coingecko.coins.CoinFullData;
 import com.millerk97.ais.coingecko.domain.Exchanges.ExchangeById;
 import com.millerk97.ais.coingecko.domain.Exchanges.Exchanges;
 import com.millerk97.ais.coingecko.domain.Exchanges.ExchangesList;
@@ -33,4 +34,7 @@ public interface CoinGeckoApiService {
     Call<List<List<String>>> getExchangesVolumeChart(@Path("id") String id, @Query("days") Integer days);
 
 
+    /* skip all optional flags, we only want FullData */
+    @GET("coins/{id}?localization=false&market_data=false&community_data=false&developer_data=false&sparkline=false'")
+    Call<CoinFullData> getCoinById(@Path("id") String id);
 }

@@ -1,5 +1,6 @@
 package com.millerk97.ais.coingecko;
 
+import com.millerk97.ais.coingecko.coins.CoinFullData;
 import com.millerk97.ais.coingecko.domain.Exchanges.ExchangeById;
 import com.millerk97.ais.coingecko.domain.Exchanges.Exchanges;
 import com.millerk97.ais.coingecko.domain.Exchanges.ExchangesList;
@@ -24,6 +25,8 @@ public interface CoinGeckoApiClient {
     ExchangesTickersById getExchangesTickersById(String id, String coinIds, Integer page, String order);
 
     List<List<String>> getExchangesVolumeChart(String id, Integer days);
+
+    CoinFullData getCoinById(String id);
 
     void shutdown();
 }

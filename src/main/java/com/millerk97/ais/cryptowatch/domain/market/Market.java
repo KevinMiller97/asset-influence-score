@@ -1,4 +1,4 @@
-package com.millerk97.ais.cryptowatch.domain;
+package com.millerk97.ais.cryptowatch.domain.market;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -6,15 +6,13 @@ import lombok.Data;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Exchange {
+public class Market {
     @JsonProperty("id")
     String id;
-    @JsonProperty("name")
-    String name;
-    @JsonProperty("symbol")
-    String symbol;
+    @JsonProperty("exchange")
+    String exchange;
+    @JsonProperty("pair")
+    String pair;
     @JsonProperty("active")
     boolean active;
-    @JsonProperty("route")
-    String route;
 }

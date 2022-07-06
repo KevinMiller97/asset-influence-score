@@ -3,6 +3,7 @@ package com.millerk97.ais.coingecko.impl;
 import com.millerk97.ais.coingecko.CoinGeckoApi;
 import com.millerk97.ais.coingecko.CoinGeckoApiClient;
 import com.millerk97.ais.coingecko.CoinGeckoApiService;
+import com.millerk97.ais.coingecko.coins.CoinFullData;
 import com.millerk97.ais.coingecko.domain.Exchanges.ExchangeById;
 import com.millerk97.ais.coingecko.domain.Exchanges.Exchanges;
 import com.millerk97.ais.coingecko.domain.Exchanges.ExchangesList;
@@ -71,6 +72,11 @@ public class CoinGeckoApiClientImpl implements CoinGeckoApiClient {
     @Override
     public List<List<String>> getExchangesVolumeChart(String id, Integer days) {
         return coinGeckoApi.executeSync(coinGeckoApiService.getExchangesVolumeChart(id, days));
+    }
+
+    @Override
+    public CoinFullData getCoinById(String id) {
+        return coinGeckoApi.executeSync(coinGeckoApiService.getCoinById(id));
     }
 
     @Override

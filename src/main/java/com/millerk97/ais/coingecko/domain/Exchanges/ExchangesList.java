@@ -11,5 +11,4 @@ public class ExchangesList {
     private String id;
     @JsonProperty("name")
     private String name;
-
 }

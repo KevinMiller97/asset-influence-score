@@ -9,6 +9,8 @@ module com.millerk97.ais {
     requires okhttp3;
     requires retrofit2.converter.jackson;
     requires static lombok;
+    requires org.apache.commons.io;
+    requires com.fasterxml.jackson.databind;
 
     opens com.millerk97.ais to javafx.fxml;
     exports com.millerk97.ais;
@@ -16,4 +18,9 @@ module com.millerk97.ais {
     exports com.millerk97.ais.coingecko.domain;
     exports com.millerk97.ais.coingecko.domain.Exchanges;
     exports com.millerk97.ais.coingecko.domain.Shared;
+    exports com.millerk97.ais.coingecko.coins;
+    exports com.millerk97.ais.cryptowatch;
+    exports com.millerk97.ais.cryptowatch.domain;
+    exports com.millerk97.ais.cryptowatch.domain.Exchange;
+    exports com.millerk97.ais.cryptowatch.domain.market;
 }

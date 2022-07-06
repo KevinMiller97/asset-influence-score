@@ -5,6 +5,8 @@ package com.millerk97.ais.twitter;
 
 import com.millerk97.ais.coingecko.CoinGeckoApiClient;
 import com.millerk97.ais.coingecko.impl.CoinGeckoApiClientImpl;
+import com.millerk97.ais.cryptowatch.CryptowatchApiClient;
+import com.millerk97.ais.cryptowatch.impl.CryptowatchApiClientImpl;
 import twitter4j.TwitterException;
 
 import java.io.IOException;
@@ -18,6 +20,11 @@ public class TwitterDriver {
         Twitterer bigBird = new Twitterer(consolePrint);
 
         CoinGeckoApiClient client = new CoinGeckoApiClientImpl();
+
+        CryptowatchApiClient cwatch = new CryptowatchApiClientImpl();
+        // System.out.println(cwatch.getExchanges());
+        // System.out.println(cwatch.getMarkets());
+
 
         client.shutdown();
         int threshold = 20; // might be changed
