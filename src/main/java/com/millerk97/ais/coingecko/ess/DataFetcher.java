@@ -43,6 +43,9 @@ public class DataFetcher {
                 FileWriter fWriter = new FileWriter(fileName);
                 System.out.println("Full Data for " + cryptocurrency + " not stored locally, fetching from API");
                 fullDataOptional = Optional.of(api.getCoinById(cryptocurrency));
+                // add additional tickers beyond 100 to ensure good coverage
+                fullDataOptional.get().getTickers().addAll(api.getTickers(cryptocurrency, 2).getTickers());
+                fullDataOptional.get().getTickers().addAll(api.getTickers(cryptocurrency, 3).getTickers());
                 fWriter.write(mapper.writeValueAsString(fullDataOptional.get()));
                 fWriter.flush();
                 fWriter.close();

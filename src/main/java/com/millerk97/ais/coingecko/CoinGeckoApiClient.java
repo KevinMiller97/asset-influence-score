@@ -26,6 +26,8 @@ public interface CoinGeckoApiClient {
 
     List<List<String>> getExchangesVolumeChart(String id, Integer days);
 
+    ExchangesTickersById getTickers(String id, int page);
+
     CoinFullData getCoinById(String id);
 
     void shutdown();

@@ -75,6 +75,11 @@ public class CoinGeckoApiClientImpl implements CoinGeckoApiClient {
     }
 
     @Override
+    public ExchangesTickersById getTickers(String id, int page) {
+        return coinGeckoApi.executeSync((coinGeckoApiService.getTickers(id, page)));
+    }
+
+    @Override
     public CoinFullData getCoinById(String id) {
         return coinGeckoApi.executeSync(coinGeckoApiService.getCoinById(id));
     }

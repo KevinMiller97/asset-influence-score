@@ -13,8 +13,16 @@ public class Main extends Application {
 
     @Override
     public void start(Stage stage) throws IOException {
-        ESSCalculator.calculateExchangeSupportScore("dogecoin");
 
+        int threshold = 20; // might be changed
+        double btcess = 0;
+
+        for (double i = threshold; i > 0; i--) {
+            btcess += threshold - i;
+        }
+        System.out.println(btcess);
+
+        System.out.println(ESSCalculator.calculateExchangeSupportScore("bitcoin"));
         /*
         FXMLLoader fxmlLoader = new FXMLLoader(Main.class.getResource("Startscreen.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), 320, 240);

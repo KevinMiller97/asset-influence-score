@@ -33,8 +33,10 @@ public interface CoinGeckoApiService {
     @GET("exchanges/{id}/volume_chart")
     Call<List<List<String>>> getExchangesVolumeChart(@Path("id") String id, @Query("days") Integer days);
 
-
     /* skip all optional flags, we only want FullData */
-    @GET("coins/{id}?localization=false&market_data=false&community_data=false&developer_data=false&sparkline=false'")
+    @GET("coins/{id}?localization=false&market_data=false&community_data=false&developer_data=false&sparkline=false")
     Call<CoinFullData> getCoinById(@Path("id") String id);
+
+    @GET("coins/{id}/tickers")
+    Call<ExchangesTickersById> getTickers(@Path("id") String id, @Query("page") int page);
 }
