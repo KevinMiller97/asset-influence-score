@@ -5,6 +5,7 @@ import com.millerk97.ais.coingecko.CoinGeckoApiClient;
 import com.millerk97.ais.coingecko.coins.CoinFullData;
 import com.millerk97.ais.coingecko.domain.Exchanges.Exchanges;
 import com.millerk97.ais.coingecko.domain.Exchanges.ExchangesList;
+import com.millerk97.ais.coingecko.global.Global;
 import com.millerk97.ais.coingecko.impl.CoinGeckoApiClientImpl;
 
 import java.io.File;
@@ -19,24 +20,75 @@ public class DataFetcher {
 
     private static final String PREFIX = "src/main/resources/com/millerk97/data/";
     private static final String COIN_FULLDATA = "%s_fulldata.json";
+    private static final String COIN_MCAP = "%s_mcap.json";
     private static final String EXCHANGES_LIST = "exchanges_list.json";
     private static final String EXCHANGES = "exchanges.json";
+    private static final String GLOBAL = "global.json";
+
 
     private static final CoinGeckoApiClient api = new CoinGeckoApiClientImpl();
     private static final ObjectMapper mapper = new ObjectMapper();
     private static Optional<CoinFullData> fullDataOptional = Optional.empty();
 
-    public static Set<Exchanges> getSupportedExchanges(String cryptocurrency) {
-        fetchCoinFullData(cryptocurrency);
+    public static Set<Exchanges> getSupportedExchanges(String cryptocurrency, boolean forceReload) {
+        fetchCoinFullData(cryptocurrency, forceReload);
         return fetchExchanges().stream().filter(exchange -> getSupportedExchangeIds().contains(exchange.getId())).collect(Collectors.toSet());
     }
 
     // TODO there is still a lot of code duplication, find a way to make local read/api call reusable
 
-    private static void fetchCoinFullData(String cryptocurrency) {
+    public static double getMarketCap(String cryptocurrency, boolean forceReload) {
+        String fileName = PREFIX + String.format(COIN_MCAP, cryptocurrency);
+        try {
+            if (new File(fileName).exists() && !forceReload) {
+                return Double.parseDouble(Files.readString(Path.of(fileName)));
+            } else {
+                FileWriter fWriter = new FileWriter(fileName);
+                System.out.println("Fetching Market cap for " + cryptocurrency + " from API");
+                double mcap = api.getPrice(cryptocurrency, "usd", true, false, false, false).get(cryptocurrency).get("usd_market_cap");
+                fWriter.write("" + mcap);
+                fWriter.flush();
+                fWriter.close();
+                System.out.println("Created Market cap local store for " + cryptocurrency);
+                return mcap;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    public static double getGlobalMarketCap(boolean forceReload) {
+        return fetchGlobalMarketCap(forceReload).getData().getTotalMarketCap().get("usd");
+    }
+
+    private static Global fetchGlobalMarketCap(boolean forceReload) {
+        String fileName = PREFIX + GLOBAL;
+        Global global;
+        try {
+            if (new File(fileName).exists() && !forceReload) {
+                System.out.println("Fetching Global market cap from local storage");
+                global = mapper.readValue(Files.readString(Path.of(fileName)), Global.class);
+            } else {
+                FileWriter fWriter = new FileWriter(fileName);
+                System.out.println("Global market cap not stored locally, fetching from API");
+                global = api.getGlobal();
+                fWriter.write(mapper.writeValueAsString(global));
+                fWriter.flush();
+                fWriter.close();
+                System.out.println("Created Full Data local store for global market cap");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new Global();
+        }
+        return global;
+    }
+
+    private static void fetchCoinFullData(String cryptocurrency, boolean forceReload) {
         String fileName = PREFIX + String.format(COIN_FULLDATA, cryptocurrency);
         try {
-            if (new File(fileName).exists()) {
+            if (new File(fileName).exists() && !forceReload) {
                 System.out.println("Reading Full Data for " + cryptocurrency + " from local storage");
                 fullDataOptional = Optional.of(mapper.readValue(Files.readString(Path.of(fileName)), CoinFullData.class));
             } else {
@@ -78,6 +130,7 @@ public class DataFetcher {
         return new ArrayList<>();
     }
 
+
     private static List<Exchanges> fetchExchanges() {
         String fileName = PREFIX + EXCHANGES;
         try {
@@ -99,6 +152,7 @@ public class DataFetcher {
         }
         return new ArrayList<>();
     }
+
 
     private static Set<String> getSupportedExchangesAsString() {
         return fullDataOptional.isPresent() ? fullDataOptional.get().getTickers().stream().map(t -> t.getMarket().getName()).collect(Collectors.toSet()) : new HashSet<>();

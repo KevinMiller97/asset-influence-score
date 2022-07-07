@@ -9,8 +9,10 @@ import com.millerk97.ais.coingecko.domain.Exchanges.Exchanges;
 import com.millerk97.ais.coingecko.domain.Exchanges.ExchangesList;
 import com.millerk97.ais.coingecko.domain.Exchanges.ExchangesTickersById;
 import com.millerk97.ais.coingecko.domain.Ping;
+import com.millerk97.ais.coingecko.global.Global;
 
 import java.util.List;
+import java.util.Map;
 
 public class CoinGeckoApiClientImpl implements CoinGeckoApiClient {
     static final Long DEFAULT_CONNECTION_TIMEOUT = 10L;
@@ -37,6 +39,16 @@ public class CoinGeckoApiClientImpl implements CoinGeckoApiClient {
     @Override
     public Ping ping() {
         return coinGeckoApi.executeSync(coinGeckoApiService.ping());
+    }
+
+    @Override
+    public Map<String, Map<String, Double>> getPrice(String ids, String vsCurrencies, boolean includeMarketCap, boolean include24hrVol, boolean include24hrChange, boolean includeLastUpdatedAt) {
+        return coinGeckoApi.executeSync(coinGeckoApiService.getPrice(ids, vsCurrencies, includeMarketCap, include24hrVol, include24hrChange, includeLastUpdatedAt));
+    }
+
+    @Override
+    public Global getGlobal() {
+        return coinGeckoApi.executeSync(coinGeckoApiService.getGlobal());
     }
 
     @Override

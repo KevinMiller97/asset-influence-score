@@ -6,12 +6,14 @@ import com.millerk97.ais.coingecko.domain.Exchanges.Exchanges;
 import com.millerk97.ais.coingecko.domain.Exchanges.ExchangesList;
 import com.millerk97.ais.coingecko.domain.Exchanges.ExchangesTickersById;
 import com.millerk97.ais.coingecko.domain.Ping;
+import com.millerk97.ais.coingecko.global.Global;
 import retrofit2.Call;
 import retrofit2.http.GET;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
 
 import java.util.List;
+import java.util.Map;
 
 public interface CoinGeckoApiService {
     @GET("ping")
@@ -19,6 +21,17 @@ public interface CoinGeckoApiService {
 
     @GET("exchanges")
     Call<List<Exchanges>> getExchanges(@Query("per_page") int perPage, @Query("page") int page);
+
+    @GET("simple/price")
+    Call<Map<String, Map<String, Double>>> getPrice(@Query("ids") String ids,
+                                                    @Query("vs_currencies") String vsCurrencies,
+                                                    @Query("include_market_cap") boolean includeMarketCap,
+                                                    @Query("include_24hr_vol") boolean include24hrVol,
+                                                    @Query("include_24hr_change") boolean include24hrChange,
+                                                    @Query("include_last_updated_at") boolean includeLastUpdatedAt);
+
+    @GET("global")
+    Call<Global> getGlobal();
 
     @GET("exchanges/list")
     Call<List<ExchangesList>> getExchangesList();

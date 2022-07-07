@@ -43,7 +43,7 @@ public class TwitterDriver {
             ethess += threshold - i;
         }
         double ethmcr = 249.5d / 1366.7d;
-        // System.out.println((ethess / ethmcr) / 0.9d);
+        System.out.println((ethess / ethmcr) / 0.9d);
         // System.out.println(ethmcr);
 
         double adaess = 0;

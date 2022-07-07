@@ -6,8 +6,10 @@ import com.millerk97.ais.coingecko.domain.Exchanges.Exchanges;
 import com.millerk97.ais.coingecko.domain.Exchanges.ExchangesList;
 import com.millerk97.ais.coingecko.domain.Exchanges.ExchangesTickersById;
 import com.millerk97.ais.coingecko.domain.Ping;
+import com.millerk97.ais.coingecko.global.Global;
 
 import java.util.List;
+import java.util.Map;
 
 public interface CoinGeckoApiClient {
     Ping ping();
@@ -17,6 +19,11 @@ public interface CoinGeckoApiClient {
     List<Exchanges> getExchanges(int perPage, int page);
 
     List<ExchangesList> getExchangesList();
+
+    Map<String, Map<String, Double>> getPrice(String ids, String vsCurrencies, boolean includeMarketCap, boolean include24hrVol,
+                                              boolean include24hrChange, boolean includeLastUpdatedAt);
+
+    Global getGlobal();
 
     ExchangeById getExchangesById(String id);
 
