@@ -1,12 +1,12 @@
-package com.millerk97.ais.coingecko.ess;
+package com.millerk97.ais.coingecko.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.millerk97.ais.coingecko.CoinGeckoApiClient;
 import com.millerk97.ais.coingecko.coins.CoinFullData;
 import com.millerk97.ais.coingecko.domain.Exchanges.Exchanges;
 import com.millerk97.ais.coingecko.domain.Exchanges.ExchangesList;
+import com.millerk97.ais.coingecko.domain.Shared.Ticker;
 import com.millerk97.ais.coingecko.global.Global;
-import com.millerk97.ais.coingecko.impl.CoinGeckoApiClientImpl;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -24,7 +24,6 @@ public class DataFetcher {
     private static final String EXCHANGES_LIST = "exchanges_list.json";
     private static final String EXCHANGES = "exchanges.json";
     private static final String GLOBAL = "global.json";
-
 
     private static final CoinGeckoApiClient api = new CoinGeckoApiClientImpl();
     private static final ObjectMapper mapper = new ObjectMapper();
@@ -61,6 +60,13 @@ public class DataFetcher {
     public static double getGlobalMarketCap(boolean forceReload) {
         return fetchGlobalMarketCap(forceReload).getData().getTotalMarketCap().get("usd");
     }
+
+    /* currently only take binance, as I deem it most trustworthy */
+    public static Ticker getMostRelevantTradingPair(String cryptocurrency) {
+        fetchCoinFullData(cryptocurrency, false);
+        return fullDataOptional.get().getTickers().stream().filter(t -> t.getBase().equals("DOGE")).filter(t -> t.getTarget().equals("USD") || t.getTarget().equals("USDT") || t.getTarget().equals("USDC")).sorted(Comparator.reverseOrder()).filter(t -> t.getMarket().getName().equals("Binance")).collect(Collectors.toList()).get(0);
+    }
+
 
     private static Global fetchGlobalMarketCap(boolean forceReload) {
         String fileName = PREFIX + GLOBAL;

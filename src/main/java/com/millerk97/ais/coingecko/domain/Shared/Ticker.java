@@ -8,7 +8,7 @@ import java.util.Map;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Ticker {
+public class Ticker implements Comparable<Ticker> {
     @JsonProperty("base")
     private String base;
     @JsonProperty("target")
@@ -42,4 +42,8 @@ public class Ticker {
     @JsonProperty("coin_id")
     private String coinId;
 
+    @Override
+    public int compareTo(Ticker o) {
+        return Float.compare((float) volume, (float) o.getVolume());
+    }
 }

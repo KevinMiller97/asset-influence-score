@@ -4,10 +4,8 @@ import com.millerk97.ais.cryptowatch.CryptowatchApi;
 import com.millerk97.ais.cryptowatch.CryptowatchApiClient;
 import com.millerk97.ais.cryptowatch.CryptowatchApiService;
 import com.millerk97.ais.cryptowatch.domain.Exchange.ExchangeList;
-import com.millerk97.ais.cryptowatch.domain.OHLC;
 import com.millerk97.ais.cryptowatch.domain.market.MarketList;
-
-import java.util.List;
+import com.millerk97.ais.cryptowatch.domain.ohlc.OHLCResult;
 
 public class CryptowatchApiClientImpl implements CryptowatchApiClient {
     static final Long DEFAULT_CONNECTION_TIMEOUT = 10L;
@@ -32,12 +30,6 @@ public class CryptowatchApiClientImpl implements CryptowatchApiClient {
     }
 
     @Override
-    public List<OHLC> getOHLC(String exchange, String pair, Integer before, Integer after) {
-        //double[] candlesticks = cryptowatchApiService.getOHLC()
-        return null;
-    }
-
-    @Override
     public ExchangeList getExchanges() {
         return cryptowatchApi.executeSync(cryptowatchApiService.getExchanges());
     }
@@ -45,5 +37,15 @@ public class CryptowatchApiClientImpl implements CryptowatchApiClient {
     @Override
     public MarketList getMarkets() {
         return cryptowatchApi.executeSync(cryptowatchApiService.getMarkets());
+    }
+
+    @Override
+    public OHLCResult getDailyOHLC(String exchange, String pair, Integer before, Integer after) {
+        return cryptowatchApi.executeSync(cryptowatchApiService.getDailyOHLC(exchange, pair, before, after));
+    }
+
+    @Override
+    public OHLCResult getHourlyOHLC(String exchange, String pair, Integer before, Integer after) {
+        return cryptowatchApi.executeSync(cryptowatchApiService.getHourlyOHLC(exchange, pair, before, after));
     }
 }

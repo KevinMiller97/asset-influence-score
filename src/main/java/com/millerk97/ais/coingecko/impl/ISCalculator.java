@@ -1,4 +1,4 @@
-package com.millerk97.ais.coingecko.ess;
+package com.millerk97.ais.coingecko.impl;
 
 import com.millerk97.ais.coingecko.domain.Exchanges.Exchanges;
 

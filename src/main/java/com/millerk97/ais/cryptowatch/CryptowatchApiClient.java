@@ -1,17 +1,16 @@
 package com.millerk97.ais.cryptowatch;
 
 import com.millerk97.ais.cryptowatch.domain.Exchange.ExchangeList;
-import com.millerk97.ais.cryptowatch.domain.OHLC;
 import com.millerk97.ais.cryptowatch.domain.market.MarketList;
-
-import java.util.List;
+import com.millerk97.ais.cryptowatch.domain.ohlc.OHLCResult;
 
 public interface CryptowatchApiClient {
-
-    List<OHLC> getOHLC(String exchange, String pair, Integer before, Integer after);
 
     ExchangeList getExchanges();
 
     MarketList getMarkets();
 
+    OHLCResult getDailyOHLC(String exchange, String pair, Integer before, Integer after);
+
+    OHLCResult getHourlyOHLC(String exchange, String pair, Integer before, Integer after);
 }
