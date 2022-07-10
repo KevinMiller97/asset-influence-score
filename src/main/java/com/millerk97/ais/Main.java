@@ -1,6 +1,7 @@
 package com.millerk97.ais;
 
 import com.millerk97.ais.cryptowatch.calc.SlidingWindow;
+import com.millerk97.ais.cryptowatch.impl.CryptoCompareReader;
 import com.millerk97.ais.cryptowatch.impl.DataFetcher;
 import javafx.application.Application;
 import javafx.stage.Stage;
@@ -23,7 +24,7 @@ public class Main extends Application {
             Long start = formatter.parse("01.01.2020").getTime() / 1000;
             Long end = formatter.parse("31.05.2022").getTime() / 1000;
             SlidingWindow window = new SlidingWindow(DataFetcher.getDailyOHLC("dogecoin", end.intValue(), start.intValue()), 15, 3);
-            System.out.println(window.findAnomalies().size());
+            System.out.println(CryptoCompareReader.getHourlyOHLCForDays(window.findAnomalies(0, 100)));
             /*
             for (int i = 0; i < 100; i++) {
                 System.out.printf("%.9f", window.calculateStandardDeviation());

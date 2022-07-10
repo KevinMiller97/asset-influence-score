@@ -23,6 +23,9 @@ public class OHLC {
     @JsonProperty("quoteVolume")
     long quoteVolume;
 
+    public OHLC() {
+    }
+
     public static OHLC of(double[] data) {
         OHLC ohlc = new OHLC();
         ohlc.setCloseTime((long) data[ResponseIndex.CLOSE_TIME]);
@@ -32,6 +35,18 @@ public class OHLC {
         ohlc.setClosePrice(data[ResponseIndex.CLOSE_PRICE]);
         ohlc.setVolume((long) data[ResponseIndex.VOLUME]);
         ohlc.setQuoteVolume((long) data[ResponseIndex.QUOTE_VOLUME]);
+        return ohlc;
+    }
+
+    public static OHLC of(long closeTime, double openPrice, double highPrice, double lowPrice, double closePrice, long volume, long quoteVolume) {
+        OHLC ohlc = new OHLC();
+        ohlc.closeTime = closeTime;
+        ohlc.openPrice = openPrice;
+        ohlc.highPrice = highPrice;
+        ohlc.lowPrice = lowPrice;
+        ohlc.closePrice = closePrice;
+        ohlc.volume = volume;
+        ohlc.quoteVolume = quoteVolume;
         return ohlc;
     }
 }
