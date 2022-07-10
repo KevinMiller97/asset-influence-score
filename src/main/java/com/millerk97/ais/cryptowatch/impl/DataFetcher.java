@@ -1,7 +1,6 @@
 package com.millerk97.ais.cryptowatch.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.millerk97.ais.coingecko.coins.CoinFullData;
 import com.millerk97.ais.coingecko.domain.Shared.Ticker;
 import com.millerk97.ais.cryptowatch.CryptowatchApiClient;
 import com.millerk97.ais.cryptowatch.domain.ohlc.OHLC;
@@ -12,25 +11,23 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 public class DataFetcher {
 
     private static final String PREFIX = "src/main/resources/com/millerk97/ohlc/";
-    private static final String COIN_FULLDATA = "%s_fulldata.json";
-    private static final String COIN_MCAP = "%s_mcap.json";
-    private static final String OHLC_TEMPLATE = "%s_%s_%d_%d.json";
-    private static final String EXCHANGES = "exchanges.json";
-    private static final String GLOBAL = "global.json";
+    private static final String OHLC_DAILY_TEMPLATE = "%s_%s_%d_%d_daily.json";
 
     private static final CryptowatchApiClient api = new CryptowatchApiClientImpl();
     private static final ObjectMapper mapper = new ObjectMapper();
-    private static final Optional<CoinFullData> fullDataOptional = Optional.empty();
 
     public static List<OHLC> getDailyOHLC(String cryptocurrency, Integer before, Integer after) {
         Ticker mostRelevantTradingPair = com.millerk97.ais.coingecko.impl.DataFetcher.getMostRelevantTradingPair(cryptocurrency);
-        String fileName = PREFIX + String.format(OHLC_TEMPLATE, cryptocurrency, mostRelevantTradingPair.getMarket().getName(), before, after);
+        String fileName = PREFIX + String.format(OHLC_DAILY_TEMPLATE, cryptocurrency, mostRelevantTradingPair.getMarket().getName(), before, after);
 
         try {
             if (new File(fileName).exists()) {
@@ -49,7 +46,6 @@ public class DataFetcher {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
         return new ArrayList<>();
     }
 
