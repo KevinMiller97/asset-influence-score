@@ -61,10 +61,10 @@ public class DataFetcher {
         return fetchGlobalMarketCap(forceReload).getData().getTotalMarketCap().get("usd");
     }
 
-    /* currently only take binance, as I deem it most trustworthy */
+    /* currently only take binance, as I deem it most trustworthy; also only take DOGEUSDT */
     public static Ticker getMostRelevantTradingPair(String cryptocurrency) {
         fetchCoinFullData(cryptocurrency, false);
-        return fullDataOptional.get().getTickers().stream().filter(t -> t.getBase().equals("DOGE")).filter(t -> t.getTarget().equals("USD") || t.getTarget().equals("USDT") || t.getTarget().equals("USDC")).sorted(Comparator.reverseOrder()).filter(t -> t.getMarket().getName().equals("Binance")).collect(Collectors.toList()).get(0);
+        return fullDataOptional.get().getTickers().stream().filter(t -> t.getBase().equals("DOGE")).filter(t -> t.getTarget().equals("USDT")).sorted(Comparator.reverseOrder()).filter(t -> t.getMarket().getName().equals("Binance")).collect(Collectors.toList()).get(0);
     }
 
 

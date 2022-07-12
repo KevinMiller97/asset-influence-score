@@ -5,8 +5,8 @@ package com.millerk97.ais.twitter;
 
 import com.millerk97.ais.coingecko.CoinGeckoApiClient;
 import com.millerk97.ais.coingecko.impl.CoinGeckoApiClientImpl;
-import com.millerk97.ais.cryptowatch.CryptowatchApiClient;
-import com.millerk97.ais.cryptowatch.impl.CryptowatchApiClientImpl;
+import com.millerk97.ais.cryptocompare.CryptocompareApiClient;
+import com.millerk97.ais.cryptocompare.impl.CryptocompareApiClientImpl;
 import twitter4j.TwitterException;
 
 import java.io.IOException;
@@ -21,7 +21,7 @@ public class TwitterDriver {
 
         CoinGeckoApiClient client = new CoinGeckoApiClientImpl();
 
-        CryptowatchApiClient cwatch = new CryptowatchApiClientImpl();
+        CryptocompareApiClient cwatch = new CryptocompareApiClientImpl();
         // System.out.println(cwatch.getExchanges());
         // System.out.println(cwatch.getMarkets());
 
