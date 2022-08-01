@@ -1,6 +1,5 @@
 package com.millerk97.ais.cryptocompare.calc;
 
-import com.millerk97.ais.cryptocompare.constant.Timeframe;
 import com.millerk97.ais.cryptocompare.domain.ohlc.OHLC;
 
 import java.text.SimpleDateFormat;
@@ -28,15 +27,24 @@ public class AnomalyDay {
         List<OHLC> anomalies = new ArrayList<>();
         SimpleDateFormat formatter = new SimpleDateFormat("dd.MM.yyyy HH:mm");
         for (int i = fromIndex; i < untilIndex - 1; i++) {
+            if (print) {
+                long timestamp = candles.get(i).getTime();
+                System.out.print(String.format("hourly | open: %.5f | close: %.5f | On: %s (%s) | Threshold * SD: %.9f | This candle: %.9f", candles.get(i).getOpen(), candles.get(i).getClose(), formatter.format(new Date(timestamp * 1000)), timestamp, breakoutThreshold * calculateMeanFluctuation(), calc(candles.get(i))));
+            }
             if (calc(candles.get(i)) > breakoutThreshold * calculateMeanFluctuation()) {
-                if (print) {
-                    long timestamp = candles.get(i).getTime();
-                    System.out.println(String.format("Timeframe: %s | On: %s (%s) | Threshold * SD: %.9f | This candle: %.9f", Timeframe.HOURS_1, formatter.format(new Date(timestamp * 1000)), timestamp, breakoutThreshold * calculateMeanFluctuation(), calc(candles.get(i))));
-                }
                 anomalies.add(candles.get(i));
+                if (print) {
+                    System.out.print(" XXX\n");
+                }
+            } else {
+                if (print) {
+                    System.out.print("\n");
+                }
             }
         }
-        // System.out.println(anomalies.isEmpty() ? "no anomalies found" : "all anomalies found");
+        if (print) {
+            System.out.println("____________________________________________");
+        }
         return anomalies;
     }
 
@@ -44,7 +52,7 @@ public class AnomalyDay {
      * an experimental function which should be used to experiment with different calculations on OHLC candles
      */
     private double calc(OHLC ohlc) {
-        return ohlc.getHigh() - ohlc.getLow();
+        return (ohlc.getHigh() - ohlc.getLow()) * ohlc.getVolumeTo() / 10000;
     }
 
     public double calculateMeanFluctuation() {

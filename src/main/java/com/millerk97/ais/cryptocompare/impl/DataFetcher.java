@@ -88,7 +88,7 @@ public class DataFetcher {
     }
 
     private static List<OHLC> filterTimeframe(APIResult result, long start, long end) {
-        return Arrays.stream(result.getData().getData()).filter(data -> (data.getTime() >= start && data.getTime() < end)).collect(Collectors.toList());
+        return Arrays.stream(result.getData().getData()).filter(data -> (data.getTime() >= start && data.getTime() <= end)).collect(Collectors.toList());
     }
 
 

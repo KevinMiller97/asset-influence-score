@@ -39,19 +39,27 @@ public class SlidingWindow {
     }
 
     public List<OHLC> findAnomalies(boolean print) {
-        return findAnomalies(0, candles.size(), print);
+        return findAnomalies(0, print);
     }
 
-    public List<OHLC> findAnomalies(int fromIndex, int untilIndex, boolean print) {
+    public List<OHLC> findAnomalies(long earliestTimestamp, boolean print) {
         List<OHLC> anomalies = new ArrayList<>();
         SimpleDateFormat formatter = new SimpleDateFormat("dd.MM.yyyy HH:mm");
-        for (int i = fromIndex; i < untilIndex - 1; i++) {
-            if (calc(candles.get(i)) > breakoutThreshold * calculateMeanFluctuation()) {
-                if (print) {
-                    long timestamp = candles.get(i).getTime();
-                    System.out.println(String.format("Timeframe: %s | On: %s (%s) | Threshold * SD: %.9f | This candle: %.9f", timeframe, formatter.format(new Date(timestamp * 1000)), timestamp, breakoutThreshold * calculateMeanFluctuation(), calc(candles.get(i))));
-                }
+        // we start at windowSize because we need "historical" data for day 1
+        for (int i = windowSize; i < candles.size() - 1; i++) {
+            if (print) {
+                long timestamp = candles.get(i).getTime();
+                System.out.print(String.format("TF: daily | On: %s (%s) | Threshold: %15.9f | This: %15.9f |", formatter.format(new Date(timestamp * 1000)), timestamp, breakoutThreshold * calculateMeanFluctuation(), calc(candles.get(i))));
+            }
+            if (calc(candles.get(i)) > breakoutThreshold * calculateMeanFluctuation() && candles.get(i).getTime() > earliestTimestamp) {
                 anomalies.add(candles.get(i));
+                if (print) {
+                    System.out.print(" XXX\n");
+                }
+            } else {
+                if (print) {
+                    System.out.print("\n");
+                }
             }
             advanceWindow();
         }
@@ -63,7 +71,7 @@ public class SlidingWindow {
      * an experimental function which should be used to experiment with different calculations on OHLC candles
      */
     private double calc(OHLC ohlc) {
-        return ohlc.getHigh() - ohlc.getLow();
+        return (ohlc.getHigh() - ohlc.getLow()) * ohlc.getVolumeTo() / 10000;
     }
 
     public void advanceWindow() {

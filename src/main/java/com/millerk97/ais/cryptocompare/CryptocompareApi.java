@@ -40,7 +40,7 @@ public class CryptocompareApi {
                 return response.body();
             } else {
                 try {
-                    CryptocompareApiError apiError = getCoinGeckoApiError(response);
+                    CryptocompareApiError apiError = getCryptocompareApiError(response);
                     apiError.setCode(response.code());
                     throw new CryptowatchApiException(apiError);
                 } catch (IOException e) {
@@ -57,7 +57,7 @@ public class CryptocompareApi {
         okHttpClient.connectionPool().evictAll();
     }
 
-    private CryptocompareApiError getCoinGeckoApiError(Response<?> response) throws IOException {
+    private CryptocompareApiError getCryptocompareApiError(Response<?> response) throws IOException {
         return (CryptocompareApiError) retrofit.responseBodyConverter(CryptocompareApiError.class, new Annotation[0])
                 .convert(response.errorBody());
     }
