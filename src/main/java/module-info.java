@@ -33,5 +33,5 @@ module com.millerk97.ais {
     exports com.millerk97.ais.twitter.data.entities;
     exports com.millerk97.ais.twitter.data.geo;
     exports com.millerk97.ais.twitter.data.metrics;
-    exports com.millerk97.ais.twitter.file;
+    exports com.millerk97.ais.twitter.data.user;
 }

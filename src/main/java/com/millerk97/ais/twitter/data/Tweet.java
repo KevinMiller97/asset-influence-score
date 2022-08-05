@@ -2,7 +2,7 @@ package com.millerk97.ais.twitter.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.millerk97.ais.twitter.data.context.ContextAnnotations;
+import com.millerk97.ais.twitter.data.context.Annotation;
 import com.millerk97.ais.twitter.data.entities.Entities;
 import com.millerk97.ais.twitter.data.geo.Geo;
 import com.millerk97.ais.twitter.data.metrics.NonPublicMetrics;
@@ -21,7 +21,7 @@ public class Tweet {
     @JsonProperty("author_id")
     String authorId;
     @JsonProperty("context_annotations")
-    ContextAnnotations contextAnnotations;
+    Annotation[] contextAnnotations;
     @JsonProperty("created_at")
     String createdAt;
     @JsonProperty("entities")
@@ -40,5 +40,4 @@ public class Tweet {
     boolean possiblySensitive;
     @JsonProperty("reply_settings")
     String replySettings;
-
 }

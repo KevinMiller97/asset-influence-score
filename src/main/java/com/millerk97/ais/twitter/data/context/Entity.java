@@ -6,9 +6,11 @@ import lombok.Data;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Annotation {
-    @JsonProperty("domain")
-    Domain domain;
-    @JsonProperty("entity")
-    Entity entity;
+public class Entity {
+    @JsonProperty("id")
+    String id;
+    @JsonProperty("name")
+    String name;
+    @JsonProperty("description")
+    String description;
 }

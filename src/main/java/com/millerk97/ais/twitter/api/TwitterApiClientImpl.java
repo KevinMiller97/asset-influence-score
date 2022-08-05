@@ -1,9 +1,6 @@
 package com.millerk97.ais.twitter.api;
 
-import com.millerk97.ais.twitter.data.Tweet;
-
-import java.util.Arrays;
-import java.util.List;
+import com.millerk97.ais.twitter.data.APIResult;
 
 public class TwitterApiClientImpl implements TwitterApiClient {
     static final Long DEFAULT_CONNECTION_TIMEOUT = 10L;
@@ -29,12 +26,12 @@ public class TwitterApiClientImpl implements TwitterApiClient {
 
 
     @Override
-    public List<Tweet> searchTweets(String query, String startTime_ISO8601, String endTime_ISO8601) {
-        return Arrays.asList(twitterApi.executeSync(twitterApiService.searchTweets(query, startTime_ISO8601, endTime_ISO8601)).getData());
+    public APIResult searchTweets(String query, String startTime_ISO8601, String endTime_ISO8601) {
+        return twitterApi.executeSync(twitterApiService.searchTweets(query, startTime_ISO8601, endTime_ISO8601));
     }
 
     @Override
-    public List<Tweet> searchTweets(String query) {
-        return Arrays.asList(twitterApi.executeSync(twitterApiService.searchTweets(query)).getData());
+    public APIResult searchTweets(String query, String startTime_ISO8601, String endTime_ISO8601, String next_token) {
+        return twitterApi.executeSync(twitterApiService.searchTweets(query, startTime_ISO8601, endTime_ISO8601, next_token));
     }
 }
