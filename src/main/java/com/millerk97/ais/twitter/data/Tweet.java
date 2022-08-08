@@ -7,6 +7,7 @@ import com.millerk97.ais.twitter.data.entities.Entities;
 import com.millerk97.ais.twitter.data.geo.Geo;
 import com.millerk97.ais.twitter.data.metrics.NonPublicMetrics;
 import com.millerk97.ais.twitter.data.metrics.PublicMetrics;
+import com.millerk97.ais.twitter.data.user.User;
 import lombok.Data;
 
 @Data
@@ -40,4 +41,6 @@ public class Tweet {
     boolean possiblySensitive;
     @JsonProperty("reply_settings")
     String replySettings;
+    // set manually while fetching
+    User user;
 }
