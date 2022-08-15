@@ -47,18 +47,20 @@ public class SlidingWindow {
         SimpleDateFormat formatter = new SimpleDateFormat("dd.MM.yyyy HH:mm");
         // we start at windowSize because we need "historical" data for day 1
         for (int i = windowSize; i < candles.size() - 1; i++) {
-            if (print) {
-                long timestamp = candles.get(i).getTime();
-                System.out.print(String.format("TF: daily | On: %s (%s) | Threshold: %15.9f | This: %15.9f |", formatter.format(new Date(timestamp * 1000)), timestamp, breakoutThreshold * calculateMeanFluctuation(), calc(candles.get(i))));
-            }
-            if (calc(candles.get(i)) > breakoutThreshold * calculateMeanFluctuation() && candles.get(i).getTime() > earliestTimestamp) {
-                anomalies.add(candles.get(i));
+            if (candles.get(i).getTime() > earliestTimestamp) {
                 if (print) {
-                    System.out.print(" XXX\n");
+                    long timestamp = candles.get(i).getTime();
+                    System.out.print(String.format("TF: daily | On: %s (%s) | Threshold: %15.9f | This: %15.9f |", formatter.format(new Date(timestamp * 1000)), timestamp, breakoutThreshold * calculateMeanFluctuation(), calc(candles.get(i))));
                 }
-            } else {
-                if (print) {
-                    System.out.print("\n");
+                if (calc(candles.get(i)) > breakoutThreshold * calculateMeanFluctuation()) {
+                    anomalies.add(candles.get(i));
+                    if (print) {
+                        System.out.print(" XXX\n");
+                    }
+                } else {
+                    if (print) {
+                        System.out.print("\n");
+                    }
                 }
             }
             advanceWindow();

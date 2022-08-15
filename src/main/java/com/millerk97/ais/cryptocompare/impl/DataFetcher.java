@@ -31,7 +31,7 @@ public class DataFetcher {
     private static final CryptocompareApiClient api = new CryptocompareApiClientImpl();
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    public static List<OHLC> fetchDailyOHLC(String cryptocurrency, String ticker, Integer before) {
+    public static List<OHLC> fetchOHLC(String cryptocurrency, String ticker, Integer before) {
         Ticker mrtp = com.millerk97.ais.coingecko.impl.DataFetcher.getMostRelevantTradingPair(ticker);
         String fileName = PREFIX + String.format(DAILY_DIR, cryptocurrency) + String.format(OHLC_DAILY_TEMPLATE, mrtp.getMarket().getName(), mrtp.getBase(), mrtp.getTarget(), before);
 
@@ -79,7 +79,6 @@ public class DataFetcher {
                 String fileName = PREFIX + String.format(HOURLY_DIR, cryptocurrency) + String.format(OHLC_HOURLY_TEMPLATE, cryptocurrency, result.getData().getTimeFrom(), result.getData().getTimeTo());
                 currentLowerLimit = result.getData().getTimeFrom();
 
-
                 // makes sure the directory exists, doesn't do anything if it already does
                 new File(PREFIX + String.format(HOURLY_DIR, cryptocurrency)).mkdirs();
                 FileWriter fWriter = new FileWriter(fileName);
@@ -92,12 +91,13 @@ public class DataFetcher {
         }
     }
 
+    public static List<OHLC> getHourlyOHLCForDay(String cryptocurrency, OHLC day) {
+        return getHourlyOHLCsForTimeframe(cryptocurrency, day.getTime(), day.getTime() + LENGTH_OF_DAY);
+    }
 
-    public static List<OHLC> getHourlyOHLCsForDay(String cryptocurrency, OHLC day) {
+    public static List<OHLC> getHourlyOHLCsForTimeframe(String cryptocurrency, long start, long end) {
         List<OHLC> hourly = new ArrayList<>();
 
-        long start = day.getTime();
-        long end = day.getTime() + LENGTH_OF_DAY;
         // find corresponding hourly file with timeframe;
         for (File hourlyJson : new File(PREFIX + String.format(HOURLY_DIR, cryptocurrency)).listFiles()) {
             // [0] .. cryptocurrency; [1] .. {from}; [2] .. {to}; [3] .. ".json"
@@ -106,7 +106,7 @@ public class DataFetcher {
                 // correct file
                 try {
                     APIResult result = mapper.readValue(Files.readString(Path.of(PREFIX + String.format(HOURLY_DIR, cryptocurrency) + hourlyJson.getName())), APIResult.class);
-                    hourly.addAll(filterTimeframe(result, start, end));
+                    hourly.addAll(filterTimeframe(Arrays.asList(result.getData().getData()), start, end));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -119,8 +119,12 @@ public class DataFetcher {
         return Arrays.asList(result.getData().getData());
     }
 
-    private static List<OHLC> filterTimeframe(APIResult result, long start, long end) {
-        return Arrays.stream(result.getData().getData()).filter(data -> (data.getTime() >= start && data.getTime() <= end)).collect(Collectors.toList());
+    private static List<OHLC> filterTimeframe(List<OHLC> result, long start, long end) {
+        return result.stream().filter(data -> (data.getTime() >= start && data.getTime() <= end)).collect(Collectors.toList());
+    }
+
+    public static List<OHLC> getDailyOHLCForTimeframe(String cryptocurrency, String ticker, Long start, Long end) {
+        return filterTimeframe(fetchOHLC(cryptocurrency, ticker, end.intValue()), start, end);
     }
 
 }

@@ -33,7 +33,7 @@ public class TweetFetcher {
 
         try {
             if (new File(fileName).exists() && !Files.readString(Path.of(fileName)).isBlank()) {
-                System.out.println(String.format("File present: %s | fetching from local storage", fileName));
+                // System.out.println(String.format("File present: %s | fetching from local storage", fileName));
                 return Arrays.asList(mapper.readValue(Files.readString(Path.of(fileName)), TweetList.class).getTweets());
             } else {
                 System.out.println(String.format("Fetching Tweets from API: \"%s\" | From: %s   To: %s", query, from_iso8601, to_iso8601));

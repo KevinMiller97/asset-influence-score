@@ -6,7 +6,7 @@ import com.millerk97.ais.cryptocompare.calc.SlidingWindow;
 import com.millerk97.ais.cryptocompare.constant.Timeframe;
 import com.millerk97.ais.cryptocompare.domain.ohlc.OHLC;
 import com.millerk97.ais.cryptocompare.impl.DataFetcher;
-import com.millerk97.ais.twitter.DataframeUtil;
+import com.millerk97.ais.dataframe.DataframeUtil;
 import com.millerk97.ais.twitter.TweetFetcher;
 import com.millerk97.ais.twitter.data.Tweet;
 import com.millerk97.ais.util.PropertiesLoader;
@@ -15,61 +15,63 @@ import com.millerk97.ais.util.TimeFormatter;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class AIS {
 
     static final SimpleDateFormat timestampCreator = new SimpleDateFormat("dd.MM.yyyy");
+    private static final String ELON_MUSK_ID = "44196397";
     private static final int DURATION_OF_HOUR_IN_SECONDS = 3600;
+    private static final int DURATION_OF_DAY_IN_SECONDS = 86400;
+    private static final boolean FETCH_TWEETS = false;
+    private static final boolean CREATE_DATAFRAMES = true;
+    private static final boolean PRINT_ANOMALIES = true;
+    private static final boolean returnpoint = true; // TODO REMOVE
+
+    private static String CRYPTOCURRENCY, QUERY, TICKER;
+    private static Long START, END;
+
 
     public static void main(String[] args) {
         // necessary because of DST and because Vienna is in GMT+2, all data is provided in GMT
         System.setProperty("user.timezone", "UTC");
-        ISCalculator.calculateInfluencabilityScore("dogecoin");
-        bitcoin();
+        ISCalculator.calculateInfluencabilityScore("bitcoin");
+        run();
     }
 
-    public static void bitcoin() {
+    public static void run() {
         try {
-            final String cryptocurrency = PropertiesLoader.loadProperty("cryptocurrency");
-            final String query = PropertiesLoader.loadProperty("query");
-            final String ticker = PropertiesLoader.loadProperty("ticker");
-            final Long start = timestampCreator.parse(PropertiesLoader.loadProperty("start")).getTime() / 1000;
-            final Long end = timestampCreator.parse(PropertiesLoader.loadProperty("end")).getTime() / 1000;
+            CRYPTOCURRENCY = PropertiesLoader.loadProperty("cryptocurrency");
+            QUERY = PropertiesLoader.loadProperty("query");
+            TICKER = PropertiesLoader.loadProperty("ticker");
+            START = timestampCreator.parse(PropertiesLoader.loadProperty("start")).getTime() / 1000;
+            END = timestampCreator.parse(PropertiesLoader.loadProperty("end")).getTime() / 1000;
 
-            // can take VERY long if ran for the first time
-            fetchAllTweetsInTimeframe(cryptocurrency, query, start, end);
-            /*
+            findAnomalies();
 
+            // this takes roughly 15 hours to complete
+            if (FETCH_TWEETS) {
+                System.out.println("Fetching all tweets for " + CRYPTOCURRENCY);
+                fetchAllTweetsInTimeframe();
+                System.out.println("Tweets fetched!");
+            }
 
-            // window size 14; threshold 2 works very well
-            SlidingWindow window = new SlidingWindow(DataFetcher.fetchDailyOHLC(cryptocurrency, ticker, end.intValue()), 14, 2, Timeframe.DAYS_1);
-            List<OHLC> anomalyDaysOHLC = window.findAnomalies(start, false);
+            if (CREATE_DATAFRAMES) {
+                System.out.println("Creating dataframes for " + CRYPTOCURRENCY);
+                createDataframes();
+                System.out.println("Dataframes created!");
+            }
 
-            List<AnomalyDay> anomalyDays = new ArrayList<>();
-            anomalyDaysOHLC.stream().map(ohlc -> anomalyDays.add(new AnomalyDay(DataFetcher.getHourlyOHLCsForDay(cryptocurrency, ohlc), 1.9))).collect(Collectors.toList());
-
+            if (returnpoint)
+                return;
             Map<String, Long> userTweets = new HashMap<>();
 
-            for (AnomalyDay day : anomalyDays) {
-                List<OHLC> anomalies = day.findAnomalies(false);
-                for (OHLC ohlc : anomalies) {
-                    List<Tweet> tweets = TweetFetcher.fetchTweets(cryptocurrency, query, TimeFormatter.formatISO8601(ohlc.getTime() * 1000), TimeFormatter.formatISO8601((ohlc.getTime() + 3600) * 1000));
-                    for (Tweet t : tweets) {
-                        userTweets.put(t.getUser().getUsername(), userTweets.get(t.getUser().getUsername()) != null ? userTweets.get(t.getUser().getUsername()) + 1 : 1);
-                    }
-                    DataframeUtil.storeDataframe(cryptocurrency, ohlc, tweets);
-                }
-            }
             for (String authorId : userTweets.keySet()) {
                 if (userTweets.get(authorId) > 3)
                     System.out.println("AuthorID: " + authorId + "; No. Tweets: " + userTweets.get(authorId));
             }
-             */
         } catch (ParseException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -77,64 +79,47 @@ public class AIS {
         }
     }
 
-    private static void fetchAllTweetsInTimeframe(String cryptocurrency, String query, Long fromInSeconds, Long toInSeconds) {
-        Long currentTimestamp = fromInSeconds;
-        while (currentTimestamp + DURATION_OF_HOUR_IN_SECONDS <= toInSeconds) {
-            TweetFetcher.fetchTweets(cryptocurrency, query, TimeFormatter.formatISO8601(currentTimestamp * 1000), TimeFormatter.formatISO8601((currentTimestamp + DURATION_OF_HOUR_IN_SECONDS) * 1000));
+    private static void fetchAllTweetsInTimeframe() {
+        Long currentTimestamp = START;
+        while (currentTimestamp + DURATION_OF_HOUR_IN_SECONDS <= END) {
+            List<Tweet> tweets = TweetFetcher.fetchTweets(CRYPTOCURRENCY, QUERY, TimeFormatter.formatISO8601(currentTimestamp * 1000), TimeFormatter.formatISO8601((currentTimestamp + DURATION_OF_HOUR_IN_SECONDS) * 1000));
             currentTimestamp += DURATION_OF_HOUR_IN_SECONDS;
         }
     }
 
-
-    public static void dogecoin() {
-        final String ELON_MUSK_ID = "44196397";
-        final String cryptocurrency = "dogecoin";
-        final String query = "Dogecoin OR Doge";
-        final String ticker = "DOGE";
-
-        try {
-            Long start = timestampCreator.parse("01.01.2020").getTime() / 1000;
-            Long end = timestampCreator.parse("10.07.2022").getTime() / 1000;
-            // window size 14; threshold 2 works very well
-            SlidingWindow window = new SlidingWindow(DataFetcher.fetchDailyOHLC(cryptocurrency, ticker, end.intValue()), 14, 2, Timeframe.DAYS_1);
-
-            List<OHLC> anomalyDaysOHLC = window.findAnomalies(start, false);
-
-            List<AnomalyDay> anomalyDays = new ArrayList<>();
-            anomalyDaysOHLC.stream().map(ohlc -> anomalyDays.add(new AnomalyDay(DataFetcher.getHourlyOHLCsForDay(cryptocurrency, ohlc), 1.9))).collect(Collectors.toList());
-
-            Map<String, Long> userTweets = new HashMap<>();
-            List<Tweet> elonTweets = new ArrayList<>();
-
-            for (AnomalyDay day : anomalyDays) {
-                List<OHLC> anomalies = day.findAnomalies(true);
-                for (OHLC ohlc : anomalies) {
-                    List<Tweet> tweets = TweetFetcher.fetchTweets(cryptocurrency, query, TimeFormatter.formatISO8601(ohlc.getTime() * 1000), TimeFormatter.formatISO8601((ohlc.getTime() + 3600) * 1000));
-                    for (Tweet t : tweets) {
-                        userTweets.put(t.getUser().getUsername(), userTweets.get(t.getUser().getUsername()) != null ? userTweets.get(t.getUser().getUsername()) + 1 : 1);
-                        if (t.getAuthorId().equals(ELON_MUSK_ID)) {
-                            elonTweets.add(t);
-                        }
-                    }
-                    DataframeUtil.storeDataframe(cryptocurrency, ohlc, tweets);
-                }
+    private static void findAnomalies() {
+        for (OHLC day : findDailyPriceAnomaliesInTimeframe()) {
+            for (OHLC hour : findHourlyPriceAnomaliesForDay(day)) {
+                // do something
             }
-            for (String authorId : userTweets.keySet()) {
-                if (userTweets.get(authorId) > 3)
-                    System.out.println("AuthorID: " + authorId + "; No. Tweets: " + userTweets.get(authorId));
-                if (authorId.equals(ELON_MUSK_ID)) {
-                    System.err.println("AuthorID: ELON MUSK No. Tweets: " + userTweets.get(authorId));
-                }
-            }
-            for (Tweet t : elonTweets) {
-                System.out.println("_____________");
-                System.out.println(t.getCreatedAt());
-                System.out.println(t.getText());
-                System.out.println("_____________");
-            }
-
-        } catch (ParseException e) {
-            e.printStackTrace();
         }
     }
+
+    private static List<OHLC> findDailyPriceAnomaliesInTimeframe() {
+        // window size 14; threshold 2 works very well | also fetches OHLC data if not present
+        SlidingWindow dailySlidingWindow = new SlidingWindow(DataFetcher.fetchOHLC(CRYPTOCURRENCY, TICKER, END.intValue()), 14, 2, Timeframe.DAYS_1);
+        return dailySlidingWindow.findAnomalies(START, PRINT_ANOMALIES);
+    }
+
+    private static List<OHLC> findHourlyPriceAnomaliesForDay(OHLC day) {
+        return new AnomalyDay(DataFetcher.getHourlyOHLCForDay(CRYPTOCURRENCY, day), 1.9).findAnomalies(PRINT_ANOMALIES);
+    }
+
+    private static void createDataframes() {
+        List<OHLC> days = DataFetcher.getDailyOHLCForTimeframe(CRYPTOCURRENCY, TICKER, START, END);
+        for (OHLC day : days) {
+            List<OHLC> hours = DataFetcher.getHourlyOHLCForDay(CRYPTOCURRENCY, day);
+            for (OHLC hour : hours) {
+                DataframeUtil.storeDataframe(CRYPTOCURRENCY, hour, TweetFetcher.fetchTweets(CRYPTOCURRENCY, QUERY, TimeFormatter.formatISO8601(hour.getTime() * 1000), TimeFormatter.formatISO8601((hour.getTime() + DURATION_OF_HOUR_IN_SECONDS) * 1000)));
+            }
+        }
+    }
+
+    /*
+     List<Tweet> tweets = TweetFetcher.fetchTweets(cryptocurrency, query, TimeFormatter.formatISO8601(ohlc.getTime() * 1000), TimeFormatter.formatISO8601((ohlc.getTime() + 3600) * 1000));
+                for (Tweet t : tweets) {
+                    userTweets.put(t.getUser().getUsername(), userTweets.get(t.getUser().getUsername()) != null ? userTweets.get(t.getUser().getUsername()) + 1 : 1);
+                }
+                DataframeUtil.storeDataframe(cryptocurrency, ohlc, tweets);
+     */
 }

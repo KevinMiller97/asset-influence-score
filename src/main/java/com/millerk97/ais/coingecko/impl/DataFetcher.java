@@ -95,7 +95,6 @@ public class DataFetcher {
         String fileName = PREFIX + String.format(COIN_FULLDATA, cryptocurrency);
         try {
             if (new File(fileName).exists() && !forceReload) {
-                System.out.println("Reading Full Data for " + cryptocurrency + " from local storage");
                 fullDataOptional = Optional.of(mapper.readValue(Files.readString(Path.of(fileName)), CoinFullData.class));
             } else {
                 FileWriter fWriter = new FileWriter(fileName);
