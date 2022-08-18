@@ -2,6 +2,7 @@ package com.millerk97.ais.dataframe;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.millerk97.ais.cryptocompare.domain.ohlc.OHLC;
+import com.millerk97.ais.cryptocompare.domain.ohlc.OHLCStatistics;
 import com.millerk97.ais.dataframe.model.DFTweet;
 import com.millerk97.ais.dataframe.model.Dataframe;
 import com.millerk97.ais.twitter.data.Tweet;
@@ -23,7 +24,19 @@ public class DataframeUtil {
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    public static void storeDataframe(String cryptocurrency, OHLC ohlc, List<Tweet> tweets) {
+
+    public static void deleteDataframes(String cryptocurrency) {
+        File dir = new File(String.format(PREFIX, cryptocurrency) + String.format(SUBDIR, cryptocurrency));
+        if (dir != null) {
+            System.out.printf("Deleting %d existing dataframes for %s", dir.listFiles().length, cryptocurrency);
+            for (File file : dir.listFiles()) {
+                file.delete();
+            }
+        }
+    }
+
+
+    public static void storeDataframe(String cryptocurrency, OHLC ohlc, OHLCStatistics statistics, List<Tweet> tweets) {
 
         // makes sure the directory exists, doesn't do anything if it already does
         new File(PREFIX + String.format(SUBDIR, cryptocurrency)).mkdirs();
@@ -36,6 +49,7 @@ public class DataframeUtil {
                 Dataframe df = new Dataframe();
                 df.setOhlc(ohlc);
                 df.setTweets(tweets.stream().map(t -> new DFTweet(t)).sorted((t1, t2) -> -t1.getPublicMetrics().getLikeCount()).collect(Collectors.toList()).toArray(new DFTweet[0]));
+                df.setStatistics(statistics);
                 fWriter.write(mapper.writeValueAsString(df));
                 fWriter.flush();
                 fWriter.close();
@@ -45,8 +59,8 @@ public class DataframeUtil {
         }
     }
 
-    public static Dataframe getDataframe(Long startTimestamp) {
-        String fileName = PREFIX + String.format(FILE_TEMPLATE, TimeFormatter.formatISO8601(startTimestamp * 1000).substring(0, 13), TimeFormatter.formatISO8601((startTimestamp + 3600) * 1000).substring(0, 13));
+    public static Dataframe getDataframe(Long startTimestamp, String cryptocurrency) {
+        String fileName = PREFIX + String.format(SUBDIR, cryptocurrency) + String.format(FILE_TEMPLATE, TimeFormatter.formatISO8601(startTimestamp * 1000).substring(0, 13), TimeFormatter.formatISO8601((startTimestamp + 3600) * 1000).substring(0, 13));
 
         try {
             if (new File(fileName).exists() && !Files.readString(Path.of(fileName)).isBlank()) {

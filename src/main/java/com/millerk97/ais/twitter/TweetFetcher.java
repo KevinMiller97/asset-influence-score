@@ -27,7 +27,7 @@ public class TweetFetcher {
     private static final TwitterApiClient api = new TwitterApiClientImpl();
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    public static List<Tweet> fetchTweets(String cryptocurrency, String query, String from_iso8601, String to_iso8601) {
+    public static List<Tweet> fetchTweets(String cryptocurrency, String query, String from_iso8601, String to_iso8601) throws TwitterApiException {
 
         String fileName = PREFIX + String.format(FILE_TEMPLATE, cryptocurrency, query, from_iso8601.substring(0, 13), to_iso8601.substring(0, 13));
 
@@ -38,23 +38,14 @@ public class TweetFetcher {
             } else {
                 System.out.println(String.format("Fetching Tweets from API: \"%s\" | From: %s   To: %s", query, from_iso8601, to_iso8601));
                 List<Tweet> tweets = new ArrayList<>();
-                try {
-                    APIResult apiResult = api.searchTweets(query, from_iso8601, to_iso8601);
-                    System.out.println("initial result count: " + apiResult.getMeta().getResultCount());
-                    // make effectively final for this iteration
-                    APIResult finalApiResult = apiResult;
-                    // filter out all tweets with 0 likes
-                    tweets.addAll(Arrays.stream(apiResult.getData()).filter(t -> t.getPublicMetrics().getLikeCount() > 0).collect(Collectors.toList()));
-                    // map the associated user to the Tweet object for convenience
-                    tweets = tweets.stream().map(t -> mapUser(t, Arrays.stream(finalApiResult.getIncludedUsers().getUsers()).filter(user -> user.getId().equals(t.getAuthorId())).findAny().get())).collect(Collectors.toList());
-                } catch (TwitterApiException e) {
-                    try {
-                        System.out.println("API limit reached, waiting 2 minutes for retry");
-                        Thread.sleep(120000);
-                    } catch (InterruptedException ex) {
-                        ex.printStackTrace();
-                    }
-                }
+                APIResult apiResult = api.searchTweets(query, from_iso8601, to_iso8601);
+                System.out.println("initial result count: " + apiResult.getMeta().getResultCount());
+                // make effectively final for this iteration
+                APIResult finalApiResult = apiResult;
+                // filter out all tweets with 0 likes
+                tweets.addAll(Arrays.stream(apiResult.getData()).filter(t -> t.getPublicMetrics().getLikeCount() > 0).collect(Collectors.toList()));
+                // map the associated user to the Tweet object for convenience
+                tweets = tweets.stream().map(t -> mapUser(t, Arrays.stream(finalApiResult.getIncludedUsers().getUsers()).filter(user -> user.getId().equals(t.getAuthorId())).findAny().get())).collect(Collectors.toList());
 
                 TweetList result = new TweetList();
                 result.setTweets(tweets.toArray(new Tweet[0]));

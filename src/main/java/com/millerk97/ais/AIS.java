@@ -1,43 +1,46 @@
 package com.millerk97.ais;
 
-import com.millerk97.ais.coingecko.impl.ISCalculator;
-import com.millerk97.ais.cryptocompare.calc.AnomalyDay;
 import com.millerk97.ais.cryptocompare.calc.SlidingWindow;
-import com.millerk97.ais.cryptocompare.constant.Timeframe;
 import com.millerk97.ais.cryptocompare.domain.ohlc.OHLC;
+import com.millerk97.ais.cryptocompare.domain.ohlc.OHLCStatistics;
 import com.millerk97.ais.cryptocompare.impl.DataFetcher;
 import com.millerk97.ais.dataframe.DataframeUtil;
+import com.millerk97.ais.dataframe.model.DFTweet;
+import com.millerk97.ais.dataframe.model.Dataframe;
+import com.millerk97.ais.dataframe.model.TweetMap;
 import com.millerk97.ais.twitter.TweetFetcher;
+import com.millerk97.ais.twitter.api.TwitterApiException;
 import com.millerk97.ais.twitter.data.Tweet;
 import com.millerk97.ais.util.PropertiesLoader;
 import com.millerk97.ais.util.TimeFormatter;
+import javafx.util.Pair;
 
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class AIS {
 
     static final SimpleDateFormat timestampCreator = new SimpleDateFormat("dd.MM.yyyy");
     private static final String ELON_MUSK_ID = "44196397";
     private static final int DURATION_OF_HOUR_IN_SECONDS = 3600;
-    private static final int DURATION_OF_DAY_IN_SECONDS = 86400;
     private static final boolean FETCH_TWEETS = false;
     private static final boolean CREATE_DATAFRAMES = true;
+    private static final boolean DELETE_EXISTING_DATAFRAMES = true;
     private static final boolean PRINT_ANOMALIES = true;
-    private static final boolean returnpoint = true; // TODO REMOVE
+    private static final boolean MAP_TWEETS = true;
+    private static final boolean RELOAD_OHLC = false;
 
     private static String CRYPTOCURRENCY, QUERY, TICKER;
     private static Long START, END;
-
+    private static double BREAKOUT_THRESHOLD;
+    private static int WINDOW_SIZE;
 
     public static void main(String[] args) {
         // necessary because of DST and because Vienna is in GMT+2, all data is provided in GMT
         System.setProperty("user.timezone", "UTC");
-        ISCalculator.calculateInfluencabilityScore("bitcoin");
+        // ISCalculator.calculateInfluencabilityScore("bitcoin");
         run();
     }
 
@@ -48,8 +51,16 @@ public class AIS {
             TICKER = PropertiesLoader.loadProperty("ticker");
             START = timestampCreator.parse(PropertiesLoader.loadProperty("start")).getTime() / 1000;
             END = timestampCreator.parse(PropertiesLoader.loadProperty("end")).getTime() / 1000;
+            WINDOW_SIZE = Integer.parseInt(PropertiesLoader.loadProperty("windowSize"));
+            BREAKOUT_THRESHOLD = Double.parseDouble(PropertiesLoader.loadProperty("breakoutThreshold"));
 
-            findAnomalies();
+            DataFetcher.fetchOHLC(CRYPTOCURRENCY, TICKER, START.intValue(), END.intValue(), RELOAD_OHLC);
+            // DAYS
+            // printMostSignificantCandles(DataFetcher.getDailyOHLCForTimeframe(CRYPTOCURRENCY, TICKER, START.intValue(), END.intValue()));
+            // HOURS
+            printMostSignificantCandles(DataFetcher.getHourlyOHLCForTimeframe(CRYPTOCURRENCY, TICKER, START.intValue(), END.intValue()));
+
+            if (true) return;
 
             // this takes roughly 15 hours to complete
             if (FETCH_TWEETS) {
@@ -64,62 +75,135 @@ public class AIS {
                 System.out.println("Dataframes created!");
             }
 
-            if (returnpoint)
-                return;
-            Map<String, Long> userTweets = new HashMap<>();
-
-            for (String authorId : userTweets.keySet()) {
-                if (userTweets.get(authorId) > 3)
-                    System.out.println("AuthorID: " + authorId + "; No. Tweets: " + userTweets.get(authorId));
+            if (MAP_TWEETS) {
+                System.out.println("Mapping Tweets");
+                mapTweets();
             }
-        } catch (ParseException e) {
+
+        } catch (ParseException | IOException e) {
             e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+        }
+    }
+
+    private static void mapTweets() {
+        Map<String, Map<String, Long>> mappedTweets = new HashMap<>();
+        long currentTimestamp = START + DURATION_OF_HOUR_IN_SECONDS;
+        List<OHLC> anomalies = findPriceActionAnomalies();
+
+        while (currentTimestamp + DURATION_OF_HOUR_IN_SECONDS <= END) {
+            Dataframe df = DataframeUtil.getDataframe(currentTimestamp, CRYPTOCURRENCY);
+            if (df == null) {
+                System.out.println("Dataframe for Timestamp " + currentTimestamp + "(" + TimeFormatter.formatISO8601(currentTimestamp * 1000) + ") is null");
+                currentTimestamp += DURATION_OF_HOUR_IN_SECONDS;
+                continue;
+            }
+            for (DFTweet t : df.getTweets()) {
+                String key = t.getUser().getUsername();
+                if (mappedTweets.get(key) == null) {
+                    // initialize a new HashMap for the respective user
+                    Map<String, Long> userTweets = new HashMap<>();
+                    userTweets.put("anomaly", 0L);
+                    userTweets.put("regular", 0L);
+                    mappedTweets.put(key, userTweets);
+                }
+                String subKey = anomalies.contains(df.getOhlc()) ? "anomaly" : "regular";
+                mappedTweets.get(key).put(subKey, mappedTweets.get(key).get(subKey) + 1);
+            }
+            currentTimestamp += DURATION_OF_HOUR_IN_SECONDS;
+        }
+
+        // transform into data class here as HashMap is more performant but not sortable
+        List<TweetMap> tweetMapList = new ArrayList<>(mappedTweets.keySet().stream().map(authorId -> new TweetMap(authorId, mappedTweets.get(authorId).get("anomaly"), mappedTweets.get(authorId).get("regular"))).sorted(Comparator.comparing(TweetMap::computeAnomalyRatio)).toList());
+
+        TweetMap elon = null;
+        for (TweetMap user : tweetMapList) {
+            if (user.getAnomalyTweetCount() > 0 && user.getTotalTweetCount() > 5) {
+                System.out.println("Author: " + user.getAuthorId());
+                System.out.println("   regular: " + user.getRegularTweetCount());
+                System.out.println("   anomaly: " + user.getAnomalyTweetCount());
+                System.out.println("   ratio  : " + user.computeAnomalyRatio());
+            }
+            if (user.getAuthorId().equals("elonmusk"))
+                elon = user;
+        }
+
+        if (elon != null) {
+            System.out.println("Author: " + elon.getAuthorId());
+            System.out.println("   regular: " + elon.getRegularTweetCount());
+            System.out.println("   anomaly: " + elon.getAnomalyTweetCount());
+            System.out.println("   ratio  : " + elon.computeAnomalyRatio());
+        }
+    }
+
+    private static List<OHLC> findPriceActionAnomalies() {
+        System.setProperty("user.timezone", "UTC");
+        List<OHLC> anomalies = new ArrayList<>();
+        // a list of OHLC and the mean fluctuation/SD at the respective OHLC for given window size
+        SlidingWindow slidingWindow = new SlidingWindow(DataFetcher.getHourlyOHLCForTimeframe(CRYPTOCURRENCY, TICKER, START.intValue(), END.intValue()), WINDOW_SIZE);
+        List<Pair<OHLC, OHLCStatistics>> statistics = slidingWindow.getStatistics();
+        statistics.sort(Comparator.comparingInt(o -> (int) o.getKey().getTime()));
+
+        for (Pair<OHLC, OHLCStatistics> pair : statistics) {
+            OHLC ohlc = pair.getKey();
+            OHLCStatistics stats = pair.getValue();
+
+            final boolean anomaly = SlidingWindow.calculateOHLCImpact(ohlc) > BREAKOUT_THRESHOLD * stats.getMeanFluctuation();
+            if (anomaly) {
+                anomalies.add(ohlc);
+            }
+
+            if (PRINT_ANOMALIES) {
+                long timestamp = ohlc.getTime();
+                System.out.printf("TF: hourly | On: %s (%s) | Threshold: %15.9f | This: %15.9f | %s%n", TimeFormatter.prettyFormat(timestamp * 1000), timestamp, BREAKOUT_THRESHOLD * stats.getMeanFluctuation(), SlidingWindow.calculateOHLCImpact(ohlc), anomaly ? " XXX" : "");
+            }
+        }
+        return anomalies;
+    }
+
+    private static void createDataframes() {
+        if (DELETE_EXISTING_DATAFRAMES) {
+            DataframeUtil.deleteDataframes(CRYPTOCURRENCY);
+        }
+
+        List<Pair<OHLC, OHLCStatistics>> statistics = new SlidingWindow(DataFetcher.getHourlyOHLCForTimeframe(CRYPTOCURRENCY, TICKER, START.intValue(), END.intValue()), WINDOW_SIZE).getStatistics();
+        statistics.sort(Comparator.comparingInt(o -> (int) o.getKey().getTime()));
+
+        for (Pair<OHLC, OHLCStatistics> pair : statistics) {
+            OHLC ohlc = pair.getKey();
+            OHLCStatistics stats = pair.getValue();
+            DataframeUtil.storeDataframe(CRYPTOCURRENCY, ohlc, stats, TweetFetcher.fetchTweets(CRYPTOCURRENCY, QUERY, TimeFormatter.formatISO8601(ohlc.getTime() * 1000), TimeFormatter.formatISO8601((ohlc.getTime() + DURATION_OF_HOUR_IN_SECONDS) * 1000)));
         }
     }
 
     private static void fetchAllTweetsInTimeframe() {
         Long currentTimestamp = START;
         while (currentTimestamp + DURATION_OF_HOUR_IN_SECONDS <= END) {
-            List<Tweet> tweets = TweetFetcher.fetchTweets(CRYPTOCURRENCY, QUERY, TimeFormatter.formatISO8601(currentTimestamp * 1000), TimeFormatter.formatISO8601((currentTimestamp + DURATION_OF_HOUR_IN_SECONDS) * 1000));
+            List<Tweet> tweets = null;
+            while (tweets == null) {
+                try {
+                    // throws ApiException if too many tweets were fetched in a short period of time, repeat fetching for each timeframe so it doesn't skip anything
+                    tweets = TweetFetcher.fetchTweets(CRYPTOCURRENCY, QUERY, TimeFormatter.formatISO8601(currentTimestamp * 1000), TimeFormatter.formatISO8601((currentTimestamp + DURATION_OF_HOUR_IN_SECONDS) * 1000));
+                } catch (TwitterApiException e) {
+                    try {
+                        System.out.println("API limit reached, waiting 2 minutes for retry");
+                        Thread.sleep(120000);
+                    } catch (InterruptedException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            }
+            System.out.println("done");
             currentTimestamp += DURATION_OF_HOUR_IN_SECONDS;
         }
     }
 
-    private static void findAnomalies() {
-        for (OHLC day : findDailyPriceAnomaliesInTimeframe()) {
-            for (OHLC hour : findHourlyPriceAnomaliesForDay(day)) {
-                // do something
-            }
+    private static void printMostSignificantCandles(List<OHLC> candles) {
+        SlidingWindow slidingWindow = new SlidingWindow(candles, WINDOW_SIZE);
+        List<Pair<OHLC, OHLCStatistics>> statistics = slidingWindow.getStatistics();
+        statistics.sort(Comparator.comparingDouble(o -> SlidingWindow.calculateOHLCImpact(o.getKey()) / o.getValue().getMeanFluctuation()));
+
+        for (Pair<OHLC, OHLCStatistics> o : statistics) {
+            System.out.printf("TF: hourly | On: %s (%s) | Threshold: %15.9f | This: %15.9f | Magnitude: %s%n", TimeFormatter.prettyFormat(o.getKey().getTime() * 1000), o.getKey().getTime(), BREAKOUT_THRESHOLD * o.getValue().getMeanFluctuation(), SlidingWindow.calculateOHLCImpact(o.getKey()), SlidingWindow.calculateOHLCImpact(o.getKey()) / o.getValue().getMeanFluctuation());
         }
     }
-
-    private static List<OHLC> findDailyPriceAnomaliesInTimeframe() {
-        // window size 14; threshold 2 works very well | also fetches OHLC data if not present
-        SlidingWindow dailySlidingWindow = new SlidingWindow(DataFetcher.fetchOHLC(CRYPTOCURRENCY, TICKER, END.intValue()), 14, 2, Timeframe.DAYS_1);
-        return dailySlidingWindow.findAnomalies(START, PRINT_ANOMALIES);
-    }
-
-    private static List<OHLC> findHourlyPriceAnomaliesForDay(OHLC day) {
-        return new AnomalyDay(DataFetcher.getHourlyOHLCForDay(CRYPTOCURRENCY, day), 1.9).findAnomalies(PRINT_ANOMALIES);
-    }
-
-    private static void createDataframes() {
-        List<OHLC> days = DataFetcher.getDailyOHLCForTimeframe(CRYPTOCURRENCY, TICKER, START, END);
-        for (OHLC day : days) {
-            List<OHLC> hours = DataFetcher.getHourlyOHLCForDay(CRYPTOCURRENCY, day);
-            for (OHLC hour : hours) {
-                DataframeUtil.storeDataframe(CRYPTOCURRENCY, hour, TweetFetcher.fetchTweets(CRYPTOCURRENCY, QUERY, TimeFormatter.formatISO8601(hour.getTime() * 1000), TimeFormatter.formatISO8601((hour.getTime() + DURATION_OF_HOUR_IN_SECONDS) * 1000)));
-            }
-        }
-    }
-
-    /*
-     List<Tweet> tweets = TweetFetcher.fetchTweets(cryptocurrency, query, TimeFormatter.formatISO8601(ohlc.getTime() * 1000), TimeFormatter.formatISO8601((ohlc.getTime() + 3600) * 1000));
-                for (Tweet t : tweets) {
-                    userTweets.put(t.getUser().getUsername(), userTweets.get(t.getUser().getUsername()) != null ? userTweets.get(t.getUser().getUsername()) + 1 : 1);
-                }
-                DataframeUtil.storeDataframe(cryptocurrency, ohlc, tweets);
-     */
 }
