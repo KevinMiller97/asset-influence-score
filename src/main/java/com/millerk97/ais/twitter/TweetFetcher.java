@@ -1,6 +1,7 @@
 package com.millerk97.ais.twitter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.millerk97.ais.controller.FlowController;
 import com.millerk97.ais.twitter.api.TwitterApiClient;
 import com.millerk97.ais.twitter.api.TwitterApiClientImpl;
 import com.millerk97.ais.twitter.api.TwitterApiException;
@@ -33,13 +34,11 @@ public class TweetFetcher {
 
         try {
             if (new File(fileName).exists() && !Files.readString(Path.of(fileName)).isBlank()) {
-                // System.out.println(String.format("File present: %s | fetching from local storage", fileName));
                 return Arrays.asList(mapper.readValue(Files.readString(Path.of(fileName)), TweetList.class).getTweets());
             } else {
-                System.out.println(String.format("Fetching Tweets from API: \"%s\" | From: %s   To: %s", query, from_iso8601, to_iso8601));
+                FlowController.log(String.format("Fetching Tweets from API: \"%s\" | From: %s   To: %s", query, from_iso8601, to_iso8601));
                 List<Tweet> tweets = new ArrayList<>();
                 APIResult apiResult = api.searchTweets(query, from_iso8601, to_iso8601);
-                System.out.println("initial result count: " + apiResult.getMeta().getResultCount());
                 // make effectively final for this iteration
                 APIResult finalApiResult = apiResult;
                 // filter out all tweets with 0 likes

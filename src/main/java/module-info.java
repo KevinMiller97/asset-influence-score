@@ -15,6 +15,8 @@ module com.millerk97.ais {
     requires com.opencsv;
 
     opens com.millerk97.ais to javafx.fxml;
+    opens com.millerk97.ais.fxgui to javafx.fxml;
+    opens com.millerk97.ais.fxgui.components to javafx.fxml;
     exports com.millerk97.ais;
     exports com.millerk97.ais.coingecko;
     exports com.millerk97.ais.coingecko.domain;
@@ -36,4 +38,6 @@ module com.millerk97.ais {
     exports com.millerk97.ais.twitter.data.user;
     exports com.millerk97.ais.dataframe;
     exports com.millerk97.ais.dataframe.model;
+    exports com.millerk97.ais.controller;
+    opens com.millerk97.ais.controller to javafx.fxml;
 }

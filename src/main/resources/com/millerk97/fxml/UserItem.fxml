@@ -1,0 +1,52 @@
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<fx:root xmlns:fx="http://javafx.com/fxml/1" fx:id="root" type="GridPane"
+         prefHeight="150.0" prefWidth="493.0"
+         style="-fx-border-color: BLACK;">
+    <columnConstraints>
+        <ColumnConstraints hgrow="SOMETIMES"
+                           maxWidth="228.0"
+                           minWidth="10.0"
+                           prefWidth="228.0"/>
+        <ColumnConstraints hgrow="SOMETIMES"
+                           maxWidth="1.7976931348623157E308"
+                           minWidth="10.0"/>
+    </columnConstraints>
+    <rowConstraints>
+        <RowConstraints minHeight="30.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+    </rowConstraints>
+    <Label text="Username"/>
+    <HBox alignment="CENTER_LEFT" spacing="20.0"
+          GridPane.columnIndex="1">
+        <GridPane.margin>
+            <Insets bottom="10.0" top="10.0"/>
+        </GridPane.margin>
+        <Label fx:id="usernameLabel" text="[Username]"/>
+        <Button fx:id="showTweetsButton" mnemonicParsing="false" text="Show this users tweets"/>
+    </HBox>
+    <Label text="Created at" GridPane.rowIndex="1"/>
+    <Label fx:id="createdAtLabel" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+    <Label text="Follower count" GridPane.rowIndex="2"/>
+    <Label fx:id="followerCountLabel" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+    <Label text="Related Tweets - Total Tweet count" GridPane.rowIndex="3"/>
+    <Label fx:id="totalTweetCountLabel" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+    <Label text="Related Tweets - standard price action" GridPane.rowIndex="4"/>
+    <Label fx:id="tweetcountStandardLabel" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
+    <Label text="Related Tweets - price anomalies" GridPane.rowIndex="5"/>
+    <Label fx:id="tweetcountAnomalyLabel" GridPane.columnIndex="1" GridPane.rowIndex="5"/>
+    <Label text="Anomaly ratio" GridPane.rowIndex="6"/>
+    <Label fx:id="anomalyRatioLabel" GridPane.columnIndex="1" GridPane.rowIndex="6"/>
+    <Label text="Average velocity during tweets (in X)" GridPane.rowIndex="7"/>
+    <Label fx:id="avgVelocityLabel" GridPane.columnIndex="1" GridPane.rowIndex="7"/>
+    <Label text="Weighted average velocity" GridPane.rowIndex="8"/>
+    <Label fx:id="weightedAvgVelocityLabel" GridPane.columnIndex="1" GridPane.rowIndex="8"/>
+</fx:root>

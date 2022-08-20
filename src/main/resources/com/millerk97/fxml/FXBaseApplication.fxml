@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<fx:root xmlns:fx="http://javafx.com/fxml/1" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity"
+         minWidth="-Infinity"
+         prefHeight="800.0" prefWidth="1280.0" type="StackPane">
+    <AnchorPane prefHeight="200.0" prefWidth="200.0">
+        <VBox layoutX="14.0" layoutY="13.0" prefHeight="578.0" prefWidth="265.0" spacing="5.0">
+            <padding>
+                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+            </padding>
+            <VBox spacing="3.0">
+                <padding>
+                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                </padding>
+                <Label text="Cryptocurrency"/>
+                <TextField fx:id="cryptocurrencyInput" prefHeight="25.0" prefWidth="135.0" text="Dogecoin"/>
+            </VBox>
+            <VBox spacing="3.0">
+                <padding>
+                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                </padding>
+                <Label text="Ticker"/>
+                <TextField fx:id="tickerInput" prefHeight="25.0" prefWidth="135.0" text="DOGE"/>
+            </VBox>
+            <VBox spacing="3.0">
+                <padding>
+                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                </padding>
+                <Label text="Startdate (recommended: 01.01.2020)"/>
+                <DatePicker fx:id="startdatePicker"/>
+            </VBox>
+            <VBox spacing="3.0">
+                <padding>
+                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                </padding>
+                <Label text="Enddate (recommended: 31.12.2021)"/>
+                <DatePicker fx:id="enddatePicker"/>
+                <Separator>
+                    <VBox.margin>
+                        <Insets top="5.0"/>
+                    </VBox.margin>
+                </Separator>
+            </VBox>
+            <VBox spacing="3.0">
+                <padding>
+                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                </padding>
+                <Label text="Sliding Window Size"/>
+                <TextField fx:id="slidingWindowSizeInput" prefHeight="25.0" prefWidth="135.0" text="24"/>
+            </VBox>
+            <VBox spacing="3.0">
+                <padding>
+                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                </padding>
+                <Label text="Breakout Threshold"/>
+                <TextField fx:id="breakoutThresholdInput" prefHeight="25.0" prefWidth="135.0" text="5"/>
+            </VBox>
+            <Separator prefWidth="200.0"/>
+            <VBox spacing="3.0">
+                <padding>
+                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                </padding>
+                <CheckBox fx:id="printAnomalies" mnemonicParsing="false" selected="true"
+                          text="Print price anomalies to console"/>
+                <CheckBox fx:id="reloadOHLC" mnemonicParsing="false" text="Reload OHLC data from API"/>
+                <CheckBox fx:id="fetchTweetsFromApi" mnemonicParsing="false" text="Fetch Tweets from API"/>
+                <CheckBox fx:id="createDataframes" mnemonicParsing="false" text="(Re)create Dataframes"/>
+                <CheckBox fx:id="deleteDataframes" mnemonicParsing="false" text="Delete existing Dataframes"/>
+                <CheckBox fx:id="mapTweets" mnemonicParsing="false" selected="true" text="Map Tweets to Pricing data"/>
+                <CheckBox fx:id="onlyUseVerifiedUsers" mnemonicParsing="false" selected="true"
+                          text="Only incorporate verified users"/>
+                <VBox spacing="3.0">
+                    <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                    </padding>
+                    <Label text="Limit results to amount"/>
+                    <TextField fx:id="resultLimit" text="400" prefHeight="25.0" prefWidth="135.0"/>
+                    <Label text="Minimum tweets per user"/>
+                    <TextField fx:id="minimumTweets" text="25" prefHeight="25.0" prefWidth="135.0"/>
+                </VBox>
+            </VBox>
+            <Button fx:id="startButton" mnemonicParsing="false" text="Apply &amp; Run"/>
+            <Separator prefWidth="200.0"/>
+            <VBox spacing="10.0">
+                <padding>
+                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                </padding>
+                <Label text="Status:"/>
+                <Label fx:id="statusMessage" wrapText="true"/>
+            </VBox>
+        </VBox>
+        <TabPane layoutX="282.0" layoutY="13.0" prefHeight="578.0" prefWidth="493.0" style="-fx-border-color: BLACK;"
+                 tabClosingPolicy="UNAVAILABLE">
+            <Tab text="Users">
+                <ScrollPane fitToWidth="true">
+                    <VBox fx:id="userContent" spacing="1.0"/>
+                </ScrollPane>
+            </Tab>
+            <Tab text="Price Action - Daily">
+                <TabPane side="LEFT" tabClosingPolicy="UNAVAILABLE">
+                    <tabs>
+                        <Tab text="Highest Velocity">
+                            <content>
+                                <ScrollPane fitToWidth="true">
+                                    <VBox fx:id="priceActionHighestDailyVelocityContent" spacing="1.0"/>
+                                </ScrollPane>
+                            </content>
+                        </Tab>
+                        <Tab text="Chronological">
+                            <ScrollPane fitToWidth="true">
+                                <VBox fx:id="priceActionChronologicalDailyContent" spacing="1.0"/>
+                            </ScrollPane>
+                        </Tab>
+                    </tabs>
+                </TabPane>
+            </Tab>
+            <Tab text="Price Action - Hourly">
+                <TabPane side="LEFT" tabClosingPolicy="UNAVAILABLE">
+                    <Tab text="Highest Velocity">
+                        <ScrollPane fitToWidth="true">
+                            <VBox fx:id="priceActionHighestHourlyVelocityContent" spacing="1.0"/>
+                        </ScrollPane>
+                    </Tab>
+                    <Tab text="Chronological">
+                        <ScrollPane fitToWidth="true">
+                            <VBox fx:id="priceActionChronologicalHourlyContent" spacing="1.0"/>
+                        </ScrollPane>
+                    </Tab>
+                </TabPane>
+            </Tab>
+
+        </TabPane>
+        <ScrollPane layoutX="282.0" layoutY="594.0" prefHeight="192.0" prefWidth="987.0"
+                    style="-fx-border-color: BLACK;">
+            <VBox fx:id="console" prefHeight="200.0">
+                <padding>
+                    <Insets left="2.0" top="2.0"/>
+                </padding>
+            </VBox>
+        </ScrollPane>
+
+        <TabPane fx:id="tweetPane" layoutX="776.0" layoutY="13.0" prefHeight="578.0" prefWidth="493.0"
+                 style="-fx-border-color: BLACK;" tabClosingPolicy="UNAVAILABLE">
+            <Tab text="Most Popular Tweets">
+                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="594.0">
+                    <ScrollPane>
+                        <AnchorPane minHeight="0.0" minWidth="0.0">
+                            <VBox fx:id="mostPopularTweetContent" spacing="1.0"/>
+                        </AnchorPane>
+                    </ScrollPane>
+                </AnchorPane>
+            </Tab>
+        </TabPane>
+    </AnchorPane>
+</fx:root>

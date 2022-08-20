@@ -2,6 +2,7 @@ package com.millerk97.ais.cryptocompare.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.millerk97.ais.coingecko.domain.Shared.Ticker;
+import com.millerk97.ais.controller.FlowController;
 import com.millerk97.ais.cryptocompare.CryptocompareApiClient;
 import com.millerk97.ais.cryptocompare.domain.ohlc.APIResult;
 import com.millerk97.ais.cryptocompare.domain.ohlc.OHLC;
@@ -47,7 +48,7 @@ public class DataFetcher {
         }
 
         if (new File(fileNameDaily).exists() && !forceReload) {
-            System.out.printf("Daily OHLC for %s already stored locally, not fetching from API%n", cryptocurrency);
+            FlowController.log(String.format("Daily OHLC for %s already stored locally, not fetching from API", cryptocurrency));
             return;
         }
 
@@ -55,7 +56,7 @@ public class DataFetcher {
             // makes sure the directory exists, doesn't do anything if it already does
             dir.mkdirs();
             FileWriter fWriter = new FileWriter(fileNameDaily);
-            System.out.printf("Fetching Daily OHLC data from cryptocompare API | Exchange: %s, Base: %s, Target: %s, Before Timestamp %s%n", tradingPair.getMarket().getName(), tradingPair.getBase(), tradingPair.getTarget(), before);
+            FlowController.log(String.format("Fetching Daily OHLC data from cryptocompare API | Exchange: %s, Base: %s, Target: %s, Before Timestamp %s", tradingPair.getMarket().getName(), tradingPair.getBase(), tradingPair.getTarget(), before));
             APIResult result = api.getDailyOHLC(tradingPair.getMarket().getName(), tradingPair.getBase(), tradingPair.getTarget(), DAILY_LIMIT, before);
             OHLCList ohlcList = new OHLCList();
             ohlcList.setOhlcData(result.getData().getData());
@@ -79,7 +80,7 @@ public class DataFetcher {
 
         // since this function only fetches data to local storage we return
         if (new File(fileNameHourly).exists() && !forceReload) {
-            System.out.printf("Hourly OHLC for %s already stored locally, not fetching from API%n", cryptocurrency);
+            FlowController.log(String.format("Hourly OHLC for %s already stored locally, not fetching from API", cryptocurrency));
             return;
         }
 
@@ -89,7 +90,7 @@ public class DataFetcher {
             long currentLowerLimit = before;
             List<OHLC> hourlies = new ArrayList<>();
             do {
-                System.out.printf("Fetching Hourly OHLC data from cryptocompare API | Exchange: %s, Base: %s, Target: %s, Before Timestamp %s%n", tradingPair.getMarket().getName(), tradingPair.getBase(), tradingPair.getTarget(), currentLowerLimit);
+                FlowController.log(String.format("Fetching Hourly OHLC data from cryptocompare API | Exchange: %s, Base: %s, Target: %s, Before Timestamp %s", tradingPair.getMarket().getName(), tradingPair.getBase(), tradingPair.getTarget(), currentLowerLimit));
                 result = api.getHourlyOHLC(tradingPair.getMarket().getName(), tradingPair.getBase(), tradingPair.getTarget(), HOURLY_LIMIT, (int) currentLowerLimit);
                 hourlies.addAll(Arrays.stream(result.getData().getData()).toList());
                 currentLowerLimit = result.getData().getTimeFrom();
@@ -118,16 +119,12 @@ public class DataFetcher {
         return PREFIX + String.format(HOURLY_DIR, cryptocurrency) + String.format(OHLC_HOURLY_TEMPLATE, mrtp.getMarket().getName(), mrtp.getBase(), mrtp.getTarget());
     }
 
-    public static List<OHLC> getHourlyOHLCForDay(String cryptocurrency, String ticker, OHLC day) {
-        return getHourlyOHLCForTimeframe(cryptocurrency, ticker, day.getTime(), day.getTime() + LENGTH_OF_DAY);
-    }
-
     public static List<OHLC> getHourlyOHLCForTimeframe(String cryptocurrency, String ticker, long start, long end) {
         Ticker mrtp = com.millerk97.ais.coingecko.impl.DataFetcher.getMostRelevantTradingPair(ticker);
         try {
             return filterTimeframe(Arrays.stream(mapper.readValue(Files.readString(Path.of(getFileNameHourly(cryptocurrency, mrtp))), OHLCList.class).getOhlcData()).toList(), start, end);
         } catch (IOException e) {
-            System.err.printf("Could not fetch hourly OHLC for Timeframe %s - %s", start, end);
+            FlowController.log(String.format("Could not fetch hourly OHLC for Timeframe %s - %s", start, end));
             e.printStackTrace();
             return new ArrayList<>();
         }
@@ -138,7 +135,7 @@ public class DataFetcher {
         try {
             return filterTimeframe(Arrays.stream(mapper.readValue(Files.readString(Path.of(getFileNameDaily(cryptocurrency, mrtp))), OHLCList.class).getOhlcData()).toList(), start, end);
         } catch (IOException e) {
-            System.err.printf("Could not fetch hourly OHLC for Timeframe %s - %s", start, end);
+            FlowController.log(String.format("Could not fetch hourly OHLC for Timeframe %s - %s", start, end));
             e.printStackTrace();
             return new ArrayList<>();
         }
