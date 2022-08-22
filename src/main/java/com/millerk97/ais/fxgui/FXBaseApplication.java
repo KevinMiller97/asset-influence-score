@@ -23,6 +23,8 @@ public class FXBaseApplication extends StackPane {
     @FXML
     private TextField breakoutThresholdInput;
     @FXML
+    private TextField pccInput;
+    @FXML
     private DatePicker startdatePicker;
     @FXML
     private DatePicker enddatePicker;
@@ -64,6 +66,14 @@ public class FXBaseApplication extends StackPane {
     private TextField minimumTweets;
     @FXML
     private Label statusMessage;
+    @FXML
+    private Label essLabel;
+    @FXML
+    private Label mcrLabel;
+    @FXML
+    private Label influencabilityScoreLabel;
+    @FXML
+    private Label isCalculationLabel;
 
     public FXBaseApplication() {
         ScreenHelper.loadFXML(this, this);
@@ -80,7 +90,9 @@ public class FXBaseApplication extends StackPane {
     }
 
     public void setStatusMessage(String message) {
-        statusMessage.setText(message);
+        Platform.runLater(() -> {
+            statusMessage.setText(message);
+        });
     }
 
 }

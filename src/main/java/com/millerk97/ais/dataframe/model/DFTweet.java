@@ -24,13 +24,15 @@ public class DFTweet {
     PublicMetrics publicMetrics;
     @JsonProperty("conversation_id")
     String conversationId;
+    @JsonProperty("associated_velocity")
+    double associatedVelocity;
     // set manually while fetching
     DFUser user;
 
     public DFTweet() {
     }
 
-    public DFTweet(Tweet t) {
+    public DFTweet(Tweet t, double associatedVelocity) {
         id = t.getId();
         text = t.getText();
         createdAt = t.getCreatedAt();
@@ -38,6 +40,7 @@ public class DFTweet {
         entities = t.getEntities();
         publicMetrics = t.getPublicMetrics();
         conversationId = t.getConversationId();
+        this.associatedVelocity = associatedVelocity;
 
         DFUser u = new DFUser();
         u.setId(t.getUser().getId());

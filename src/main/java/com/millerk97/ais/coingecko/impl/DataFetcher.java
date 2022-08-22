@@ -6,6 +6,7 @@ import com.millerk97.ais.coingecko.coins.CoinFullData;
 import com.millerk97.ais.coingecko.domain.Exchanges.Exchanges;
 import com.millerk97.ais.coingecko.domain.Exchanges.ExchangesList;
 import com.millerk97.ais.coingecko.domain.Shared.Ticker;
+import com.millerk97.ais.coingecko.exception.CoinGeckoApiException;
 import com.millerk97.ais.coingecko.global.Global;
 
 import java.io.File;
@@ -30,7 +31,7 @@ public class DataFetcher {
     private static Optional<CoinFullData> fullDataOptional = Optional.empty();
 
     public static Set<Exchanges> getSupportedExchanges(String cryptocurrency, boolean forceReload) {
-        fetchCoinFullData(cryptocurrency, forceReload);
+        fetchCoinFullData(cryptocurrency.toLowerCase(), forceReload);
         return fetchExchanges().stream().filter(exchange -> getSupportedExchangeIds().contains(exchange.getId())).collect(Collectors.toSet());
     }
 
@@ -99,10 +100,13 @@ public class DataFetcher {
             } else {
                 FileWriter fWriter = new FileWriter(fileName);
                 System.out.println("Full Data for " + cryptocurrency + " not stored locally, fetching from API");
-                fullDataOptional = Optional.of(api.getCoinById(cryptocurrency));
-                // add additional tickers beyond 100 to ensure good coverage
-                fullDataOptional.get().getTickers().addAll(api.getTickers(cryptocurrency, 2).getTickers());
-                fullDataOptional.get().getTickers().addAll(api.getTickers(cryptocurrency, 3).getTickers());
+                try {
+                    fullDataOptional = Optional.of(api.getCoinById(cryptocurrency));
+                    // add additional tickers beyond 100 to ensure good coverage
+                    fullDataOptional.get().getTickers().addAll(api.getTickers(cryptocurrency, 2).getTickers());
+                    fullDataOptional.get().getTickers().addAll(api.getTickers(cryptocurrency, 3).getTickers());
+                } catch (CoinGeckoApiException e) {
+                }
                 fWriter.write(mapper.writeValueAsString(fullDataOptional.get()));
                 fWriter.flush();
                 fWriter.close();

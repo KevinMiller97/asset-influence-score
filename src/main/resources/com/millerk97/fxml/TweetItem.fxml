@@ -1,26 +1,25 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<fx:root xmlns:fx="http://javafx.com/fxml/1" fx:id="root" type="GridPane"
-         prefHeight="132.0" prefWidth="493.0"
+<fx:root xmlns:fx="http://javafx.com/fxml/1" fx:id="root" type="GridPane" prefWidth="493.0"
          style="-fx-border-color: BLACK;">
     <columnConstraints>
         <ColumnConstraints hgrow="SOMETIMES"
                            maxWidth="228.0"
-                           minWidth="10.0"
+                           minWidth="228.0"
                            prefWidth="228.0"/>
         <ColumnConstraints hgrow="SOMETIMES"
                            maxWidth="1.7976931348623157E308"
                            minWidth="10.0"/>
     </columnConstraints>
     <rowConstraints>
-        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+        <RowConstraints minHeight="10.0" prefHeight="15.0" vgrow="SOMETIMES"/>
+        <RowConstraints minHeight="10.0" prefHeight="15.0" vgrow="SOMETIMES"/>
+        <RowConstraints minHeight="10.0" vgrow="ALWAYS"/>
+        <RowConstraints minHeight="10.0" prefHeight="15.0" vgrow="SOMETIMES"/>
+        <RowConstraints minHeight="10.0" prefHeight="15.0" vgrow="SOMETIMES"/>
+        <RowConstraints minHeight="10.0" prefHeight="15.0" vgrow="SOMETIMES"/>
+        <RowConstraints minHeight="10.0" prefHeight="15.0" vgrow="SOMETIMES"/>
+        <RowConstraints minHeight="10.0" prefHeight="15.0" vgrow="SOMETIMES"/>
     </rowConstraints>
     <Label text="Tweet ID"/>
     <Label fx:id="tweetIdLabel" text="1970-01-01 00:00 - 00:00" GridPane.columnIndex="1"/>

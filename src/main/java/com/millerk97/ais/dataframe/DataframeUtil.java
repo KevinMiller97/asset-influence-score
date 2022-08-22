@@ -1,12 +1,15 @@
 package com.millerk97.ais.dataframe;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.millerk97.ais.controller.AISToolkit;
+import com.millerk97.ais.controller.FlowController;
 import com.millerk97.ais.cryptocompare.domain.ohlc.OHLC;
 import com.millerk97.ais.cryptocompare.domain.ohlc.OHLCStatistics;
 import com.millerk97.ais.dataframe.model.DFTweet;
 import com.millerk97.ais.dataframe.model.Dataframe;
 import com.millerk97.ais.twitter.data.Tweet;
 import com.millerk97.ais.util.TimeFormatter;
+import javafx.util.Pair;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -28,7 +31,7 @@ public class DataframeUtil {
     public static void deleteDataframes(String cryptocurrency) {
         File dir = new File(String.format(PREFIX, cryptocurrency) + String.format(SUBDIR, cryptocurrency));
         if (dir != null) {
-            System.out.printf("Deleting %d existing dataframes for %s", dir.listFiles().length, cryptocurrency);
+            FlowController.log(String.format("Deleting %d existing dataframes for %s", dir.listFiles().length, cryptocurrency));
             for (File file : dir.listFiles()) {
                 file.delete();
             }
@@ -44,11 +47,11 @@ public class DataframeUtil {
         String fileName = String.format(PREFIX, cryptocurrency) + String.format(SUBDIR, cryptocurrency) + String.format(FILE_TEMPLATE, TimeFormatter.formatISO8601(ohlc.getTime() * 1000).substring(0, 13), TimeFormatter.formatISO8601((ohlc.getTime() + 3600) * 1000).substring(0, 13));
 
         try {
-            if (!new File(fileName).exists() || Files.readString(Path.of(fileName)).isBlank()) {
+            if (!new File(fileName).exists()) {
                 FileWriter fWriter = new FileWriter(fileName);
                 Dataframe df = new Dataframe();
                 df.setOhlc(ohlc);
-                df.setTweets(tweets.stream().map(t -> new DFTweet(t)).sorted((t1, t2) -> -t1.getPublicMetrics().getLikeCount()).collect(Collectors.toList()).toArray(new DFTweet[0]));
+                df.setTweets(tweets.stream().map(t -> new DFTweet(t, AISToolkit.calculateOutbreakMagnitude(new Pair(ohlc, statistics)))).sorted((t1, t2) -> -t1.getPublicMetrics().getLikeCount()).collect(Collectors.toList()).toArray(new DFTweet[0]));
                 df.setStatistics(statistics);
                 fWriter.write(mapper.writeValueAsString(df));
                 fWriter.flush();

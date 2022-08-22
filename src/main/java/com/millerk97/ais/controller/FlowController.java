@@ -1,12 +1,15 @@
 package com.millerk97.ais.controller;
 
+import com.millerk97.ais.coingecko.impl.ISCalculator;
 import com.millerk97.ais.cryptocompare.calc.SlidingWindow;
 import com.millerk97.ais.cryptocompare.domain.ohlc.OHLC;
 import com.millerk97.ais.cryptocompare.domain.ohlc.OHLCStatistics;
+import com.millerk97.ais.dataframe.model.DFTweet;
 import com.millerk97.ais.dataframe.model.DFUser;
 import com.millerk97.ais.dataframe.model.TweetMap;
 import com.millerk97.ais.fxgui.FXBaseApplication;
 import com.millerk97.ais.fxgui.components.PriceActionItem;
+import com.millerk97.ais.fxgui.components.TweetItem;
 import com.millerk97.ais.fxgui.components.UserItem;
 import com.millerk97.ais.util.PropertiesLoader;
 import com.millerk97.ais.util.TimeFormatter;
@@ -36,14 +39,24 @@ public class FlowController {
         FlowController.stage = stage;
         Scene scene = new Scene(base);
         stage.setWidth(1300);
-        stage.setHeight(840);
+        stage.setHeight(1030);
         stage.setScene(scene);
         base.getStartButton().setOnAction(action -> run());
         stage.show();
     }
 
     public static void run() {
-        // ISCalculator.calculateInfluencabilityScore("bitcoin");
+
+        base.setStatusMessage("Started");
+        Platform.runLater(() -> {
+            // clear everything in case of multiple executions
+            base.getPriceActionHighestDailyVelocityContent().getChildren().clear();
+            base.getPriceActionHighestHourlyVelocityContent().getChildren().clear();
+            base.getPriceActionChronologicalDailyContent().getChildren().clear();
+            base.getPriceActionChronologicalHourlyContent().getChildren().clear();
+            base.getUserContent().getChildren().clear();
+            base.getMostPopularTweetContent().getChildren().clear();
+        });
 
         try {
             initializeAIS();
@@ -52,32 +65,89 @@ public class FlowController {
             e.printStackTrace();
         }
 
-        aisToolkit.getMessageProperty().addListener((observableValue, oldValue, message) -> base.setStatusMessage(message));
+        aisToolkit.getMessageProperty().addListener((observableValue, oldValue, message) -> {
+            Platform.runLater(() -> {
+                base.setStatusMessage(message);
+            });
+        });
 
-        aisToolkit.fetchOHLC(base.getReloadOHLC().isSelected());
+        ThreadWithOnFinished isCalculatorThread = new ThreadWithOnFinished() {
+            @Override
+            public void doRun() {
+                calculateInfluencabilityScore();
+            }
+        };
 
-        if (base.getFetchTweetsFromApi().isSelected()) {
-            aisToolkit.fetchAllTweetsFromStartToEnd();
-        }
+        // Threads prevent the GUI from freezing
+        ThreadWithOnFinished ohlcThread = new ThreadWithOnFinished() {
+            @Override
+            public void doRun() {
+                aisToolkit.fetchOHLC(base.getReloadOHLC().isSelected());
+            }
+        };
 
-        if (base.getDeleteDataframes().isSelected()) {
-            aisToolkit.deleteDataframes();
-        }
+        ThreadWithOnFinished tweetFetchingThread = new ThreadWithOnFinished() {
+            @Override
+            public void doRun() {
+                if (base.getFetchTweetsFromApi().isSelected()) {
+                    aisToolkit.fetchAllTweetsFromStartToEnd();
+                }
+            }
+        };
 
-        if (base.getDeleteDataframes().isSelected() || base.getCreateDataframes().isSelected()) {
-            aisToolkit.createDataframes();
-        }
+        ThreadWithOnFinished dataframeThread = new ThreadWithOnFinished() {
+            @Override
+            public void doRun() {
+                if (base.getDeleteDataframes().isSelected()) {
+                    aisToolkit.deleteDataframes();
+                }
 
-        base.setStatusMessage("Filling Price Action Data");
-        fillHighestVelocityPriceAction(true);
-        fillHighestVelocityPriceAction(false);
-        fillChronologicalPriceAction(true);
-        fillChronologicalPriceAction(false);
-        base.setStatusMessage("Price Action Data created");
+                if (base.getDeleteDataframes().isSelected() || base.getCreateDataframes().isSelected()) {
+                    aisToolkit.createDataframes();
+                }
+            }
+        };
 
-        if (base.getMapTweets().isSelected()) {
-            mapTweets();
-        }
+        ThreadWithOnFinished priceActionThread = new ThreadWithOnFinished() {
+            @Override
+            public void doRun() {
+                base.setStatusMessage("Filling Price Action Data");
+                fillHighestVelocityPriceAction(true);
+                fillHighestVelocityPriceAction(false);
+                fillChronologicalPriceAction(true);
+                fillChronologicalPriceAction(false);
+            }
+        };
+
+        ThreadWithOnFinished tweetMappingThread = new ThreadWithOnFinished() {
+            @Override
+            public void doRun() {
+                if (base.getMapTweets().isSelected()) {
+                    mapTweets();
+                }
+            }
+        };
+
+        isCalculatorThread.setOnFinished(() -> {
+            ohlcThread.start();
+        });
+
+        ohlcThread.setOnFinished(() -> {
+            if (base.getFetchTweetsFromApi().isSelected())
+                tweetFetchingThread.start();
+            else dataframeThread.start();
+        });
+
+        tweetFetchingThread.setOnFinished(() -> {
+            dataframeThread.start();
+        });
+
+        dataframeThread.setOnFinished(() -> {
+            priceActionThread.start();
+            tweetMappingThread.start();
+        });
+
+        isCalculatorThread.start();
     }
 
 
@@ -90,6 +160,7 @@ public class FlowController {
         aisToolkit = new AISToolkit();
         aisToolkit.setCryptocurrency(base.getCryptocurrencyInput().getText());
         aisToolkit.setTicker(base.getTickerInput().getText());
+        aisToolkit.setQuery(base.getCryptocurrencyInput().getText() + " OR " + base.getTickerInput().getText());
         aisToolkit.setWindowSize(Integer.parseInt(base.getSlidingWindowSizeInput().getText()));
         aisToolkit.setBreakoutThreshold(Integer.parseInt(base.getBreakoutThresholdInput().getText()));
 
@@ -103,6 +174,32 @@ public class FlowController {
         aisToolkit.setEnd(Timestamp.valueOf(base.getEnddatePicker().getValue().atStartOfDay()).getTime() / 1000);
 
          */
+    }
+
+    private static void calculateInfluencabilityScore() {
+        Platform.runLater(() -> {
+            String cryptocurrency = base.getCryptocurrencyInput().getText();
+
+            base.getInfluencabilityScoreLabel().setText(String.valueOf(ISCalculator.calculateInfluencabilityScore(cryptocurrency, Double.parseDouble(base.getPccInput().getText()), base.getReloadOHLC().isSelected())));
+
+            base.getEssLabel().setText(String.valueOf(ISCalculator.calculateExchangeSupportScore(cryptocurrency, false)));
+
+            base.getMcrLabel().setText(String.valueOf(ISCalculator.calculateMCR(cryptocurrency, false)));
+
+            base.getIsCalculationLabel().setText(ISCalculator.getInfluenceabilityScoreCalculationString(cryptocurrency, Double.parseDouble(base.getPccInput().getText())));
+        });
+    }
+
+    private static void fillMostPopularTweets(TweetMap tweetMap) {
+        Platform.runLater(() -> {
+            base.setStatusMessage("Showing " + tweetMap.getTweets().size() + " Tweets from " + tweetMap.getUser().getUsername());
+            base.getMostPopularTweetContent().getChildren().clear();
+        });
+        for (DFTweet t : tweetMap.getTweets().stream().sorted(Comparator.comparingDouble(t -> -t.getAssociatedVelocity())).collect(Collectors.toList())) {
+            Platform.runLater(() -> {
+                base.getMostPopularTweetContent().getChildren().add(createTweetItem(t));
+            });
+        }
     }
 
     private static void mapTweets() {
@@ -119,15 +216,23 @@ public class FlowController {
         }
     }
 
+    private static TweetItem createTweetItem(DFTweet tweet) {
+        return new TweetItem(tweet.getId(), tweet.getUser().getUsername(), tweet.getText(), tweet.getPublicMetrics().getLikeCount(), tweet.getPublicMetrics().getRetweetCount(), tweet.getPublicMetrics().getReplyCount(), tweet.getCreatedAt(), tweet.getAssociatedVelocity());
+    }
+
     private static PriceActionItem createPriceActionItem(Pair<OHLC, OHLCStatistics> pair, Long timestampRange) {
         OHLC ohlc = pair.getKey();
         OHLCStatistics stat = pair.getValue();
-        return new PriceActionItem(TimeFormatter.prettyFormatRange(ohlc.getTime() * 1000, (ohlc.getTime() + timestampRange) * 1000), ohlc.getOpen(), ohlc.getClose(), ohlc.getHigh(), ohlc.getLow(), ohlc.getVolumeTo(), SlidingWindow.calculateOHLCImpact(ohlc), Integer.parseInt(base.getBreakoutThresholdInput().getText()) * stat.getMeanFluctuation(), aisToolkit.calculateOutbreakMagnitude(pair), aisToolkit.isAnomaly(pair));
+        return new PriceActionItem(TimeFormatter.prettyFormatRange(ohlc.getTime() * 1000, (ohlc.getTime() + timestampRange) * 1000), ohlc.getOpen(), ohlc.getClose(), ohlc.getHigh(), ohlc.getLow(), ohlc.getVolumeTo(), SlidingWindow.calculateOHLCImpact(ohlc), Integer.parseInt(base.getBreakoutThresholdInput().getText()) * stat.getMeanFluctuation(), AISToolkit.calculateOutbreakMagnitude(pair), aisToolkit.isAnomaly(pair));
     }
 
     private static UserItem createUserItem(TweetMap tweetMap) {
         DFUser user = tweetMap.getUser();
-        return new UserItem(user.getUsername(), user.getCreatedAt(), user.getPublicMetrics().getFollowerCount(), (int) tweetMap.getTotalTweetCount(), (int) tweetMap.getRegularTweetCount(), (int) tweetMap.getAnomalyTweetCount(), tweetMap.computeAnomalyRatio(), tweetMap.getAvgMagnitude(), tweetMap.getWeightedAvgMagnitude(), () -> {/*TODO*/});
+        return new UserItem(user.getUsername(), user.getCreatedAt(), user.getPublicMetrics().getFollowerCount(), (int) tweetMap.getTotalTweetCount(), (int) tweetMap.getRegularTweetCount(), (int) tweetMap.getAnomalyTweetCount(), tweetMap.computeAnomalyRatio(), tweetMap.getAvgMagnitude(), tweetMap.getWeightedAvgMagnitude(), () -> {
+            new Thread(() -> {
+                fillMostPopularTweets(tweetMap);
+            }).start();
+        });
     }
 
     private static void fillHighestVelocityPriceAction(boolean daily) {

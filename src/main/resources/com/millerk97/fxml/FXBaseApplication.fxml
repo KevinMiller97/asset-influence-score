@@ -3,11 +3,9 @@
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<fx:root xmlns:fx="http://javafx.com/fxml/1" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity"
-         minWidth="-Infinity"
-         prefHeight="800.0" prefWidth="1280.0" type="StackPane">
+<fx:root xmlns:fx="http://javafx.com/fxml/1" prefHeight="980.0" prefWidth="1280.0" type="StackPane">
     <AnchorPane prefHeight="200.0" prefWidth="200.0">
-        <VBox layoutX="14.0" layoutY="13.0" prefHeight="578.0" prefWidth="265.0" spacing="5.0">
+        <VBox layoutX="14.0" layoutY="13.0" prefWidth="265.0" spacing="5.0">
             <padding>
                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
             </padding>
@@ -17,25 +15,10 @@
                 </padding>
                 <Label text="Cryptocurrency"/>
                 <TextField fx:id="cryptocurrencyInput" prefHeight="25.0" prefWidth="135.0" text="Dogecoin"/>
-            </VBox>
-            <VBox spacing="3.0">
-                <padding>
-                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
-                </padding>
                 <Label text="Ticker"/>
                 <TextField fx:id="tickerInput" prefHeight="25.0" prefWidth="135.0" text="DOGE"/>
-            </VBox>
-            <VBox spacing="3.0">
-                <padding>
-                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
-                </padding>
                 <Label text="Startdate (recommended: 01.01.2020)"/>
                 <DatePicker fx:id="startdatePicker"/>
-            </VBox>
-            <VBox spacing="3.0">
-                <padding>
-                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
-                </padding>
                 <Label text="Enddate (recommended: 31.12.2021)"/>
                 <DatePicker fx:id="enddatePicker"/>
                 <Separator>
@@ -43,20 +26,12 @@
                         <Insets top="5.0"/>
                     </VBox.margin>
                 </Separator>
-            </VBox>
-            <VBox spacing="3.0">
-                <padding>
-                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
-                </padding>
                 <Label text="Sliding Window Size"/>
                 <TextField fx:id="slidingWindowSizeInput" prefHeight="25.0" prefWidth="135.0" text="24"/>
-            </VBox>
-            <VBox spacing="3.0">
-                <padding>
-                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
-                </padding>
                 <Label text="Breakout Threshold"/>
                 <TextField fx:id="breakoutThresholdInput" prefHeight="25.0" prefWidth="135.0" text="5"/>
+                <Label text="Pearson Correlation Coefficient (to BTC)"/>
+                <TextField fx:id="pccInput" prefHeight="25.0" prefWidth="135.0" text="0.72"/>
             </VBox>
             <Separator prefWidth="200.0"/>
             <VBox spacing="3.0">
@@ -77,22 +52,33 @@
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
                     </padding>
                     <Label text="Limit results to amount"/>
-                    <TextField fx:id="resultLimit" text="400" prefHeight="25.0" prefWidth="135.0"/>
+                    <TextField fx:id="resultLimit" prefHeight="25.0" prefWidth="135.0" text="400"/>
                     <Label text="Minimum tweets per user"/>
-                    <TextField fx:id="minimumTweets" text="25" prefHeight="25.0" prefWidth="135.0"/>
+                    <TextField fx:id="minimumTweets" prefHeight="25.0" prefWidth="135.0" text="25"/>
                 </VBox>
             </VBox>
             <Button fx:id="startButton" mnemonicParsing="false" text="Apply &amp; Run"/>
             <Separator prefWidth="200.0"/>
             <VBox spacing="10.0">
                 <padding>
-                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                    <Insets bottom="15.0" left="5.0" right="5.0" top="5.0"/>
                 </padding>
                 <Label text="Status:"/>
                 <Label fx:id="statusMessage" wrapText="true"/>
             </VBox>
+            <Separator prefWidth="200.0"/>
+            <VBox spacing="3.0">
+                <Label text="Exchange Support Score (ESS):"/>
+                <Label fx:id="essLabel" wrapText="true"/>
+                <Label text="Market Capitalization Ratio (MCR):"/>
+                <Label fx:id="mcrLabel" wrapText="true"/>
+                <Label text="Influencability Score (IS):"/>
+                <Label fx:id="influencabilityScoreLabel" wrapText="true"/>
+                <Label text="IS Calculation:"/>
+                <Label fx:id="isCalculationLabel" wrapText="true"/>
+            </VBox>
         </VBox>
-        <TabPane layoutX="282.0" layoutY="13.0" prefHeight="578.0" prefWidth="493.0" style="-fx-border-color: BLACK;"
+        <TabPane layoutX="282.0" layoutY="13.0" prefHeight="769.0" prefWidth="493.0" style="-fx-border-color: BLACK;"
                  tabClosingPolicy="UNAVAILABLE">
             <Tab text="Users">
                 <ScrollPane fitToWidth="true">
@@ -133,7 +119,7 @@
             </Tab>
 
         </TabPane>
-        <ScrollPane layoutX="282.0" layoutY="594.0" prefHeight="192.0" prefWidth="987.0"
+        <ScrollPane layoutX="282.0" layoutY="783.0" prefHeight="192.0" prefWidth="987.0"
                     style="-fx-border-color: BLACK;">
             <VBox fx:id="console" prefHeight="200.0">
                 <padding>
@@ -142,16 +128,12 @@
             </VBox>
         </ScrollPane>
 
-        <TabPane fx:id="tweetPane" layoutX="776.0" layoutY="13.0" prefHeight="578.0" prefWidth="493.0"
+        <TabPane fx:id="tweetPane" layoutX="776.0" layoutY="13.0" prefHeight="769.0" prefWidth="493.0"
                  style="-fx-border-color: BLACK;" tabClosingPolicy="UNAVAILABLE">
             <Tab text="Most Popular Tweets">
-                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="594.0">
-                    <ScrollPane>
-                        <AnchorPane minHeight="0.0" minWidth="0.0">
-                            <VBox fx:id="mostPopularTweetContent" spacing="1.0"/>
-                        </AnchorPane>
-                    </ScrollPane>
-                </AnchorPane>
+                <ScrollPane fitToWidth="true" prefWidth="491.0">
+                    <VBox fx:id="mostPopularTweetContent" spacing="1.0"/>
+                </ScrollPane>
             </Tab>
         </TabPane>
     </AnchorPane>

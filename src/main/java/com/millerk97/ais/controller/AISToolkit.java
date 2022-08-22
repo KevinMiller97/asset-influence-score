@@ -28,6 +28,10 @@ public class AISToolkit {
     private double BREAKOUT_THRESHOLD;
     private int WINDOW_SIZE;
 
+    public static double calculateOutbreakMagnitude(Pair<OHLC, OHLCStatistics> statisticsPair) {
+        return SlidingWindow.calculateOHLCImpact(statisticsPair.getKey()) / statisticsPair.getValue().getMeanFluctuation();
+    }
+
     public void fetchOHLC(boolean reloadOHLC) {
         messageProperty.set("Fetching OHLC data");
         DataFetcher.fetchOHLC(CRYPTOCURRENCY, TICKER, START.intValue(), END.intValue(), reloadOHLC);
@@ -43,7 +47,9 @@ public class AISToolkit {
         while (currentTimestamp + DURATION_OF_HOUR_IN_SECONDS <= END) {
             Dataframe df = DataframeUtil.getDataframe(currentTimestamp, CRYPTOCURRENCY);
             if (df == null) {
+                /*
                 FlowController.log("Dataframe for Timestamp " + currentTimestamp + "(" + TimeFormatter.formatISO8601(currentTimestamp * 1000) + ") is null");
+                 */
                 currentTimestamp += DURATION_OF_HOUR_IN_SECONDS;
                 continue;
             }
@@ -57,6 +63,7 @@ public class AISToolkit {
                     tm.incrementAnomalyTweetCount();
                 else tm.incrementRegularTweetCount();
                 tm.addToMagnitude(calculateOutbreakMagnitude(new Pair<>(df.getOhlc(), df.getStatistics())));
+                tm.getTweets().add(t);
             }
             currentTimestamp += DURATION_OF_HOUR_IN_SECONDS;
         }
@@ -142,7 +149,6 @@ public class AISToolkit {
         return statistics;
     }
 
-
     public List<Pair<OHLC, OHLCStatistics>> getCandlesSortedByOutbreakMagnitude(boolean daily) {
         List<OHLC> candles = daily ? DataFetcher.getDailyOHLCForTimeframe(CRYPTOCURRENCY, TICKER, START.intValue(), END.intValue()) : DataFetcher.getHourlyOHLCForTimeframe(CRYPTOCURRENCY, TICKER, START.intValue(), END.intValue());
 
@@ -151,7 +157,9 @@ public class AISToolkit {
         statistics.sort(Comparator.comparingDouble(o -> -calculateOutbreakMagnitude(o)));
 
         for (Pair<OHLC, OHLCStatistics> o : statistics) {
-            FlowController.log(String.format("TF: hourly | On: %s (%s) | Threshold: %15.9f | This: %15.9f | Magnitude: %s", TimeFormatter.prettyFormat(o.getKey().getTime() * 1000), o.getKey().getTime(), BREAKOUT_THRESHOLD * o.getValue().getMeanFluctuation(), SlidingWindow.calculateOHLCImpact(o.getKey()), calculateOutbreakMagnitude(o)));
+            if (PRINT_ANOMALIES) {
+                FlowController.log(String.format("TF: hourly | On: %s (%s) | Threshold: %15.9f | This: %15.9f | Magnitude: %s", TimeFormatter.prettyFormat(o.getKey().getTime() * 1000), o.getKey().getTime(), BREAKOUT_THRESHOLD * o.getValue().getMeanFluctuation(), SlidingWindow.calculateOHLCImpact(o.getKey()), calculateOutbreakMagnitude(o)));
+            }
         }
 
         return statistics;
@@ -159,10 +167,6 @@ public class AISToolkit {
 
     public boolean isAnomaly(Pair<OHLC, OHLCStatistics> stats) {
         return SlidingWindow.calculateOHLCImpact(stats.getKey()) > BREAKOUT_THRESHOLD * stats.getValue().getMeanFluctuation();
-    }
-
-    public double calculateOutbreakMagnitude(Pair<OHLC, OHLCStatistics> statisticsPair) {
-        return SlidingWindow.calculateOHLCImpact(statisticsPair.getKey()) / statisticsPair.getValue().getMeanFluctuation();
     }
 
     public void setCryptocurrency(String cryptocurrency) {
