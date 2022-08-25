@@ -3,6 +3,7 @@ package com.millerk97.ais.dataframe.model;
 import lombok.Data;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -54,11 +55,13 @@ public class TweetMap {
      * incorporates middle 3 tweets
      */
     public double getMedianMagnitude() {
-        return (tweets.get((tweets.size() / 2) - 1).getAssociatedOutbreakMagnitude() + tweets.get(tweets.size() / 2).getAssociatedOutbreakMagnitude() + tweets.get((tweets.size() / 2) + 1).getAssociatedOutbreakMagnitude()) / 3;
+        List<DFTweet> sorted = tweets.stream().sorted(Comparator.comparingDouble(t -> -t.getAssociatedOutbreakMagnitude())).toList();
+        return (sorted.get((sorted.size() / 2) - 1).getAssociatedOutbreakMagnitude() + sorted.get(sorted.size() / 2).getAssociatedOutbreakMagnitude() + sorted.get((sorted.size() / 2) + 1).getAssociatedOutbreakMagnitude()) / 3;
     }
 
     public double getMedianAttributableMagnitude() {
-        return getMedianMagnitude() * ((tweets.get((tweets.size() / 2) - 1).getEngagementShare() + tweets.get(tweets.size() / 2).getEngagementShare() + tweets.get((tweets.size() / 2) + 1).getEngagementShare()) / 3);
+        List<DFTweet> sorted = tweets.stream().sorted(Comparator.comparingDouble(t -> -t.getAssociatedOutbreakMagnitude())).toList();
+        return getMedianMagnitude() * ((sorted.get((sorted.size() / 2) - 1).getEngagementShare() + sorted.get(sorted.size() / 2).getEngagementShare() + sorted.get((sorted.size() / 2) + 1).getEngagementShare()) / 3);
     }
 
     public double getMedianAttributableMagnitudeAdjustedForTwitterInfluence() {
@@ -75,7 +78,7 @@ public class TweetMap {
 
     public double getAIS() {
         double aisTemp = (getMedianAttributableMagnitude() / breakoutThreshold) * 100;
-        return aisTemp > 100 ? 100 : aisTemp;
+        return aisTemp > 100 ? 100 * getAnomalyRatio() : aisTemp;
     }
 
     public double getAnomalyRatio() {
