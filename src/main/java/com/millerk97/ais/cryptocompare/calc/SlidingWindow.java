@@ -1,5 +1,6 @@
 package com.millerk97.ais.cryptocompare.calc;
 
+import com.millerk97.ais.controller.AISToolkit;
 import com.millerk97.ais.cryptocompare.domain.ohlc.OHLC;
 import com.millerk97.ais.cryptocompare.domain.ohlc.OHLCStatistics;
 import javafx.util.Pair;
@@ -30,13 +31,6 @@ public class SlidingWindow {
         this.currentCandles = candles.stream().limit(windowSize).collect(Collectors.toList());
     }
 
-    /**
-     * an experimental function which should be used to experiment with different calculations on OHLC candles
-     */
-    public static double calculateOHLCImpact(OHLC ohlc) {
-        return (ohlc.getHigh() - ohlc.getLow()) * ohlc.getVolumeTo() / 10000;
-    }
-
     public void resetWindow() {
         this.currentCandles = candles.stream().limit(windowSize).collect(Collectors.toList());
     }
@@ -54,7 +48,9 @@ public class SlidingWindow {
                 stats.setWindowSize(windowSize);
                 stats.setIndex(i);
                 stats.setMeanFluctuation(calculateMeanFluctuation());
-                stats.setMeanStandardDeviation(calculateStandardDeviation());
+                stats.setMeanVariance(calculateMeanVariance());
+                stats.setMeanVolume(calculateMeanVolume());
+                stats.setPreviousClosePrice(candles.get(i - 1).getClose());
                 statistics.add(new Pair<>(candles.get(i), stats));
             }
             advanceWindow();
@@ -69,11 +65,15 @@ public class SlidingWindow {
 
     public double calculateMeanFluctuation() {
         // discover volatility by comparing candle high to candle low
-        return currentCandles.stream().mapToDouble(ohlc -> calculateOHLCImpact(ohlc)).sum() / windowSize;
+        return currentCandles.stream().mapToDouble(ohlc -> AISToolkit.calculateCandleVelocity(ohlc)).sum() / windowSize;
     }
 
-    public double calculateStandardDeviation() {
-        return Math.sqrt(currentCandles.stream().mapToDouble(ohlc -> (Math.pow(calculateOHLCImpact(ohlc) - calculateMeanFluctuation(), 2))).sum() / windowSize);
+    public double calculateMeanVariance() {
+        return Math.sqrt(currentCandles.stream().mapToDouble(ohlc -> (Math.pow(AISToolkit.calculateCandleVelocity(ohlc) - calculateMeanFluctuation(), 2))).sum() / windowSize);
+    }
+
+    public double calculateMeanVolume() {
+        return currentCandles.stream().mapToDouble(OHLC::getVolumeTo).sum() / windowSize;
     }
 
 }

@@ -8,7 +8,7 @@ import com.millerk97.ais.cryptocompare.domain.ohlc.OHLCStatistics;
 import com.millerk97.ais.dataframe.model.DFTweet;
 import com.millerk97.ais.dataframe.model.Dataframe;
 import com.millerk97.ais.twitter.data.Tweet;
-import com.millerk97.ais.util.TimeFormatter;
+import com.millerk97.ais.util.Formatter;
 import javafx.util.Pair;
 
 import java.io.File;
@@ -44,14 +44,14 @@ public class DataframeUtil {
         // makes sure the directory exists, doesn't do anything if it already does
         new File(PREFIX + String.format(SUBDIR, cryptocurrency)).mkdirs();
 
-        String fileName = String.format(PREFIX, cryptocurrency) + String.format(SUBDIR, cryptocurrency) + String.format(FILE_TEMPLATE, TimeFormatter.formatISO8601(ohlc.getTime() * 1000).substring(0, 13), TimeFormatter.formatISO8601((ohlc.getTime() + 3600) * 1000).substring(0, 13));
+        String fileName = String.format(PREFIX, cryptocurrency) + String.format(SUBDIR, cryptocurrency) + String.format(FILE_TEMPLATE, Formatter.formatISO8601(ohlc.getTime() * 1000).substring(0, 13), Formatter.formatISO8601((ohlc.getTime() + 3600) * 1000).substring(0, 13));
 
         try {
             if (!new File(fileName).exists()) {
                 FileWriter fWriter = new FileWriter(fileName);
                 Dataframe df = new Dataframe();
                 df.setOhlc(ohlc);
-                df.setTweets(tweets.stream().map(t -> new DFTweet(t, AISToolkit.calculateOutbreakMagnitude(new Pair(ohlc, statistics)))).sorted((t1, t2) -> -t1.getPublicMetrics().getLikeCount()).collect(Collectors.toList()).toArray(new DFTweet[0]));
+                df.setTweets(tweets.stream().filter(t -> t.getLang().equals("en")).map(t -> new DFTweet(t, AISToolkit.calculateOutbreakMagnitude(new Pair<>(ohlc, statistics)))).sorted((t1, t2) -> -t1.getPublicMetrics().getLikeCount()).collect(Collectors.toList()).toArray(new DFTweet[0]));
                 df.setStatistics(statistics);
                 fWriter.write(mapper.writeValueAsString(df));
                 fWriter.flush();
@@ -63,7 +63,7 @@ public class DataframeUtil {
     }
 
     public static Dataframe getDataframe(Long startTimestamp, String cryptocurrency) {
-        String fileName = PREFIX + String.format(SUBDIR, cryptocurrency) + String.format(FILE_TEMPLATE, TimeFormatter.formatISO8601(startTimestamp * 1000).substring(0, 13), TimeFormatter.formatISO8601((startTimestamp + 3600) * 1000).substring(0, 13));
+        String fileName = PREFIX + String.format(SUBDIR, cryptocurrency) + String.format(FILE_TEMPLATE, Formatter.formatISO8601(startTimestamp * 1000).substring(0, 13), Formatter.formatISO8601((startTimestamp + 3600) * 1000).substring(0, 13));
 
         try {
             if (new File(fileName).exists() && !Files.readString(Path.of(fileName)).isBlank()) {

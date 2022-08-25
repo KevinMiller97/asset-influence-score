@@ -22,15 +22,35 @@ import java.util.stream.Collectors;
 
 public class TweetFetcher {
 
-    private static final String PREFIX = "src/main/resources/com/millerk97/tweets/";
-    private static final String FILE_TEMPLATE = "%s/%s_%s_%s.json";
+    private static final String PREFIX = "src/main/resources/com/millerk97/tweets/%s/";
+    private static final String FILE_TEMPLATE = "/%s_%s_%s.json";
 
     private static final TwitterApiClient api = new TwitterApiClientImpl();
     private static final ObjectMapper mapper = new ObjectMapper();
 
+    public static void moveAndRename() {
+        File dirold = new File("src/main/resources/com/millerk97/tweets/v2/");
+        for (File f : dirold.listFiles()) {
+            if (f.isFile()) {
+                try {
+                    FileWriter fWriter = new FileWriter("src/main/resources/com/millerk97/tweets/v2/dogecoin/" + f.getName().substring(8));
+                    fWriter.write(mapper.writeValueAsString(mapper.readValue(Files.readString(Path.of(f.getPath())), TweetList.class)));
+                    fWriter.flush();
+                    fWriter.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
     public static List<Tweet> fetchTweets(String cryptocurrency, String query, String from_iso8601, String to_iso8601) throws TwitterApiException {
 
-        String fileName = PREFIX + String.format(FILE_TEMPLATE, cryptocurrency, query, from_iso8601.substring(0, 13), to_iso8601.substring(0, 13));
+        File dir = new File(String.format(PREFIX, cryptocurrency.toLowerCase()));
+
+        String fileName = dir + String.format(FILE_TEMPLATE, query, from_iso8601.substring(0, 13), to_iso8601.substring(0, 13));
+
+        dir.mkdirs();
 
         try {
             if (new File(fileName).exists() && !Files.readString(Path.of(fileName)).isBlank()) {
@@ -44,7 +64,8 @@ public class TweetFetcher {
                 // filter out all tweets with 0 likes
                 tweets.addAll(Arrays.stream(apiResult.getData()).filter(t -> t.getPublicMetrics().getLikeCount() > 0).collect(Collectors.toList()));
                 // map the associated user to the Tweet object for convenience
-                tweets = tweets.stream().map(t -> mapUser(t, Arrays.stream(finalApiResult.getIncludedUsers().getUsers()).filter(user -> user.getId().equals(t.getAuthorId())).findAny().get())).collect(Collectors.toList());
+
+                tweets = tweets.stream().filter(t -> isUserPresent(t, finalApiResult.getIncludedUsers().getUsers())).map(t -> mapUser(t, Arrays.stream(finalApiResult.getIncludedUsers().getUsers()).filter(user -> user.getId().equals(t.getAuthorId())).findAny().get())).collect(Collectors.toList());
 
                 TweetList result = new TweetList();
                 result.setTweets(tweets.toArray(new Tweet[0]));
@@ -59,6 +80,10 @@ public class TweetFetcher {
             e.printStackTrace();
         }
         return new ArrayList<>();
+    }
+
+    private static boolean isUserPresent(Tweet t, User[] users) {
+        return Arrays.stream(users).filter(user -> user.getId().equals(t.getAuthorId())).findAny().isPresent();
     }
 
     private static Tweet mapUser(Tweet t, User u) {

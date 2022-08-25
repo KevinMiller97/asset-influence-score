@@ -31,6 +31,10 @@ public class Tweet {
     Geo geo;
     @JsonProperty("lang")
     String lang;
+    @JsonProperty("in_reply_to_user_id")
+    String inReplyToUserId;
+    @JsonProperty("referenced_tweets")
+    ReferencedTweet[] referencedTweets;
     @JsonProperty("non_public_metrics")
     NonPublicMetrics nonPublicMetrics;
     @JsonProperty("public_metrics")

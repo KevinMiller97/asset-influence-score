@@ -1,9 +1,15 @@
 package com.millerk97.ais.fxgui.components;
 
+import com.millerk97.ais.controller.AISToolkit;
+import com.millerk97.ais.cryptocompare.domain.ohlc.OHLC;
+import com.millerk97.ais.cryptocompare.domain.ohlc.OHLCStatistics;
+import com.millerk97.ais.util.Formatter;
 import com.millerk97.ais.util.ScreenHelper;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
+import javafx.util.Pair;
 
 public class PriceActionItem extends GridPane {
 
@@ -22,23 +28,52 @@ public class PriceActionItem extends GridPane {
     @FXML
     private Label candleVolumeLabel;
     @FXML
+    private Label priceMoveInPercent;
+    @FXML
+    private Label meanVolumeLabel;
+    @FXML
+    private Label meanStandardDeviation;
+    @FXML
+    private Label varianceLabel;
+    @FXML
     private Label candleVelocityLabel;
+    @FXML
+    private Label velocityExternalFactorsLabel;
+    @FXML
+    private Label isLabel;
     @FXML
     private Label anomalyThresholdLabel;
     @FXML
     private Label magnitudeLabel;
+    @FXML
+    private Label magExternalLabel;
+    @FXML
+    private Button showTweetsButton;
 
-    public PriceActionItem(String timeframe, double open, double close, double high, double low, double volume, double velocity, double breakoutThreshold, double magnitude, boolean anomaly) {
+    public PriceActionItem(Pair<OHLC, OHLCStatistics> pair, String timeframe, int breakoutThresholdFactor, boolean anomaly, boolean showTweetsButtonVisible, double currentInfluenceabilityScore, Runnable showTweetsAction) {
         ScreenHelper.loadFXML(this, this);
+        OHLC ohlc = pair.getKey();
+        OHLCStatistics stat = pair.getValue();
         timeframeLabel.setText(timeframe);
-        candleOpenLabel.setText(String.format("%.4f", open));
-        candleHighLabel.setText(String.format("%.4f", close));
-        candleLowLabel.setText(String.format("%.4f", high));
-        candleCloseLabel.setText(String.format("%.4f", low));
-        candleVolumeLabel.setText(String.format("%.4f", volume));
-        candleVelocityLabel.setText(String.format("%.4f", velocity));
-        anomalyThresholdLabel.setText(String.format("%.4f", breakoutThreshold));
-        magnitudeLabel.setText(String.format("%.4f", magnitude));
+        candleOpenLabel.setText(Formatter.formatNumberDecimal(ohlc.getOpen()));
+        candleHighLabel.setText(Formatter.formatNumberDecimal(ohlc.getClose()));
+        candleLowLabel.setText(Formatter.formatNumberDecimal(ohlc.getHigh()));
+        candleCloseLabel.setText(Formatter.formatNumberDecimal(ohlc.getClose()));
+        candleVolumeLabel.setText(Formatter.formatNumberDecimal(ohlc.getVolumeTo()));
+        priceMoveInPercent.setText(Formatter.formatNumberDecimal((ohlc.getClose() / stat.getPreviousClosePrice() - 1) * 100));
+        meanVolumeLabel.setText(Formatter.formatNumberDecimal(stat.getMeanVolume()));
+        meanStandardDeviation.setText(Formatter.formatNumberDecimal(stat.getMeanFluctuation()));
+        varianceLabel.setText(Formatter.formatNumberDecimal(stat.getMeanVariance()));
+        candleVelocityLabel.setText(Formatter.formatNumberDecimal(AISToolkit.calculateCandleVelocity(ohlc)));
+        anomalyThresholdLabel.setText(Formatter.formatNumberDecimal(breakoutThresholdFactor * stat.getMeanFluctuation()));
+        magnitudeLabel.setText(Formatter.formatNumberDecimal(AISToolkit.calculateOutbreakMagnitude(pair)));
+        double velocityExternal = AISToolkit.calculateCandleVelocityAttributableToExternalFactors(pair);
+        velocityExternalFactorsLabel.setText(Formatter.formatNumberDecimal(velocityExternal > 0 ? velocityExternal : 0));
+        isLabel.setText(Formatter.formatNumberDecimal(currentInfluenceabilityScore));
+        double magExternal = AISToolkit.calculateOutbreakMagnitudeAttributableToExternalFactors(pair);
+        magExternalLabel.setText(Formatter.formatNumberDecimal(magExternal > 0 ? magExternal : 0));
+        showTweetsButton.setOnAction(action -> showTweetsAction.run());
+        showTweetsButton.setVisible(showTweetsButtonVisible);
         if (anomaly) {
             root.setStyle(root.getStyle() + ";-fx-background-color: ORANGE;");
         }

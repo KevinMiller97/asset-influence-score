@@ -5,6 +5,7 @@ import com.millerk97.ais.coingecko.domain.Exchanges.ExchangeById;
 import com.millerk97.ais.coingecko.domain.Exchanges.Exchanges;
 import com.millerk97.ais.coingecko.domain.Exchanges.ExchangesList;
 import com.millerk97.ais.coingecko.domain.Exchanges.ExchangesTickersById;
+import com.millerk97.ais.coingecko.domain.MarketChart.MarketChart;
 import com.millerk97.ais.coingecko.domain.Ping;
 import com.millerk97.ais.coingecko.global.Global;
 import retrofit2.Call;
@@ -52,4 +53,7 @@ public interface CoinGeckoApiService {
 
     @GET("coins/{id}/tickers")
     Call<ExchangesTickersById> getTickers(@Path("id") String id, @Query("page") int page);
+
+    @GET("coins/{id}/market_chart/range")
+    Call<MarketChart> getMarketChart(@Path("id") String id, @Query("vs_currency") String targetCurrency, @Query("from") String from, @Query("to") String to);
 }

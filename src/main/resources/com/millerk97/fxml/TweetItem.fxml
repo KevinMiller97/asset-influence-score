@@ -35,6 +35,8 @@
     <Label fx:id="replyCountLabel" GridPane.columnIndex="1" GridPane.rowIndex="5"/>
     <Label text="Created At:" GridPane.rowIndex="6"/>
     <Label fx:id="createdAtLabel" GridPane.columnIndex="1" GridPane.rowIndex="6"/>
-    <Label text="Price velocity in associated hourly TF" GridPane.rowIndex="7"/>
+    <Label text="Price Move Magnitude (multiple)" GridPane.rowIndex="7"/>
     <Label fx:id="velocityLabel" GridPane.columnIndex="1" GridPane.rowIndex="7"/>
+    <Label text="Percent Share of Engagement in TF" GridPane.rowIndex="8"/>
+    <Label fx:id="engagementShareLabel" GridPane.columnIndex="1" GridPane.rowIndex="8"/>
 </fx:root>

@@ -45,35 +45,27 @@ public class FXBaseApplication extends StackPane {
     @FXML
     private TabPane tweetPane;
     @FXML
-    private VBox mostPopularTweetContent;
+    private VBox selectedTweetContent;
     @FXML
     private CheckBox fetchTweetsFromApi;
     @FXML
-    private CheckBox printAnomalies;
-    @FXML
     private CheckBox createDataframes;
-    @FXML
-    private CheckBox deleteDataframes;
-    @FXML
-    private CheckBox mapTweets;
     @FXML
     private CheckBox reloadOHLC;
     @FXML
     private CheckBox onlyUseVerifiedUsers;
     @FXML
+    private CheckBox onlyUseOriginalTweets;
+    @FXML
     private TextField resultLimit;
     @FXML
     private TextField minimumTweets;
     @FXML
+    private TextField twitterInfluenceFactor;
+    @FXML
     private Label statusMessage;
     @FXML
     private Label essLabel;
-    @FXML
-    private Label mcrLabel;
-    @FXML
-    private Label influencabilityScoreLabel;
-    @FXML
-    private Label isCalculationLabel;
 
     public FXBaseApplication() {
         ScreenHelper.loadFXML(this, this);

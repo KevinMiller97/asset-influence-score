@@ -22,6 +22,7 @@ module com.millerk97.ais {
     exports com.millerk97.ais.coingecko.domain;
     exports com.millerk97.ais.coingecko.domain.Exchanges;
     exports com.millerk97.ais.coingecko.domain.Shared;
+    exports com.millerk97.ais.coingecko.domain.MarketChart;
     exports com.millerk97.ais.coingecko.coins;
     exports com.millerk97.ais.coingecko.global;
     exports com.millerk97.ais.cryptocompare;

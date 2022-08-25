@@ -8,6 +8,7 @@ import com.millerk97.ais.coingecko.domain.Exchanges.ExchangeById;
 import com.millerk97.ais.coingecko.domain.Exchanges.Exchanges;
 import com.millerk97.ais.coingecko.domain.Exchanges.ExchangesList;
 import com.millerk97.ais.coingecko.domain.Exchanges.ExchangesTickersById;
+import com.millerk97.ais.coingecko.domain.MarketChart.MarketChart;
 import com.millerk97.ais.coingecko.domain.Ping;
 import com.millerk97.ais.coingecko.global.Global;
 
@@ -94,6 +95,11 @@ public class CoinGeckoApiClientImpl implements CoinGeckoApiClient {
     @Override
     public CoinFullData getCoinById(String id) {
         return coinGeckoApi.executeSync(coinGeckoApiService.getCoinById(id));
+    }
+
+    @Override
+    public MarketChart getMarketChart(String id, String targetCurrency, String from, String to) {
+        return coinGeckoApi.executeSync(coinGeckoApiService.getMarketChart(id, targetCurrency, from, to));
     }
 
     @Override

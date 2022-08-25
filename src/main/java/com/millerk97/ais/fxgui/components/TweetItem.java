@@ -1,5 +1,7 @@
 package com.millerk97.ais.fxgui.components;
 
+import com.millerk97.ais.dataframe.model.DFTweet;
+import com.millerk97.ais.util.Formatter;
 import com.millerk97.ais.util.ScreenHelper;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -24,17 +26,20 @@ public class TweetItem extends GridPane {
     private Label createdAtLabel;
     @FXML
     private Label velocityLabel;
+    @FXML
+    private Label engagementShareLabel;
 
-    public TweetItem(String tweetId, String author, String text, int likes, int retweets, int replyCount, String createdAt, double associatedVelocity) {
+    public TweetItem(DFTweet t) {
         ScreenHelper.loadFXML(this, this);
-        tweetIdLabel.setText(tweetId);
-        authorLabel.setText(author);
-        textLabel.setText(text);
-        likeCountLabel.setText(String.valueOf(likes));
-        retweetLabel.setText(String.valueOf(retweets));
-        replyCountLabel.setText(String.valueOf(replyCount));
-        createdAtLabel.setText(createdAt);
-        velocityLabel.setText(String.valueOf(associatedVelocity));
+        tweetIdLabel.setText(t.getId());
+        authorLabel.setText(t.getUser().getUsername());
+        textLabel.setText(t.getText());
+        likeCountLabel.setText(Formatter.formatNumber(t.getPublicMetrics().getLikeCount()));
+        retweetLabel.setText(Formatter.formatNumber(t.getPublicMetrics().getRetweetCount()));
+        replyCountLabel.setText(Formatter.formatNumber(t.getPublicMetrics().getReplyCount()));
+        createdAtLabel.setText(t.getCreatedAt());
+        velocityLabel.setText(Formatter.formatNumberDecimal(t.getAssociatedOutbreakMagnitude()));
+        engagementShareLabel.setText(Formatter.formatNumberDecimal(t.getEngagementShare() * 100));
     }
 
 }

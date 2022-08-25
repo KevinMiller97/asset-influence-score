@@ -38,15 +38,13 @@
                 <padding>
                     <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
                 </padding>
-                <CheckBox fx:id="printAnomalies" mnemonicParsing="false" selected="true"
-                          text="Print price anomalies to console"/>
                 <CheckBox fx:id="reloadOHLC" mnemonicParsing="false" text="Reload OHLC data from API"/>
                 <CheckBox fx:id="fetchTweetsFromApi" mnemonicParsing="false" text="Fetch Tweets from API"/>
                 <CheckBox fx:id="createDataframes" mnemonicParsing="false" text="(Re)create Dataframes"/>
-                <CheckBox fx:id="deleteDataframes" mnemonicParsing="false" text="Delete existing Dataframes"/>
-                <CheckBox fx:id="mapTweets" mnemonicParsing="false" selected="true" text="Map Tweets to Pricing data"/>
                 <CheckBox fx:id="onlyUseVerifiedUsers" mnemonicParsing="false" selected="true"
-                          text="Only incorporate verified users"/>
+                          text="Only Incorporate Verified Users"/>
+                <CheckBox fx:id="onlyUseOriginalTweets" mnemonicParsing="false" selected="true"
+                          text="Only Original Tweets (no Replies/RT)"/>
                 <VBox spacing="3.0">
                     <padding>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
@@ -54,7 +52,9 @@
                     <Label text="Limit results to amount"/>
                     <TextField fx:id="resultLimit" prefHeight="25.0" prefWidth="135.0" text="400"/>
                     <Label text="Minimum tweets per user"/>
-                    <TextField fx:id="minimumTweets" prefHeight="25.0" prefWidth="135.0" text="25"/>
+                    <TextField fx:id="minimumTweets" prefHeight="25.0" prefWidth="135.0" text="15"/>
+                    <Label text="Twitter's influence over market (assumption)"/>
+                    <TextField fx:id="twitterInfluenceFactor" prefHeight="25.0" prefWidth="135.0" text="0.7"/>
                 </VBox>
             </VBox>
             <Button fx:id="startButton" mnemonicParsing="false" text="Apply &amp; Run"/>
@@ -70,12 +70,6 @@
             <VBox spacing="3.0">
                 <Label text="Exchange Support Score (ESS):"/>
                 <Label fx:id="essLabel" wrapText="true"/>
-                <Label text="Market Capitalization Ratio (MCR):"/>
-                <Label fx:id="mcrLabel" wrapText="true"/>
-                <Label text="Influencability Score (IS):"/>
-                <Label fx:id="influencabilityScoreLabel" wrapText="true"/>
-                <Label text="IS Calculation:"/>
-                <Label fx:id="isCalculationLabel" wrapText="true"/>
             </VBox>
         </VBox>
         <TabPane layoutX="282.0" layoutY="13.0" prefHeight="769.0" prefWidth="493.0" style="-fx-border-color: BLACK;"
@@ -130,9 +124,9 @@
 
         <TabPane fx:id="tweetPane" layoutX="776.0" layoutY="13.0" prefHeight="769.0" prefWidth="493.0"
                  style="-fx-border-color: BLACK;" tabClosingPolicy="UNAVAILABLE">
-            <Tab text="Most Popular Tweets">
+            <Tab text="Selected Tweets">
                 <ScrollPane fitToWidth="true" prefWidth="491.0">
-                    <VBox fx:id="mostPopularTweetContent" spacing="1.0"/>
+                    <VBox fx:id="selectedTweetContent" spacing="1.0"/>
                 </ScrollPane>
             </Tab>
         </TabPane>

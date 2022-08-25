@@ -5,6 +5,7 @@ import com.millerk97.ais.coingecko.domain.Exchanges.ExchangeById;
 import com.millerk97.ais.coingecko.domain.Exchanges.Exchanges;
 import com.millerk97.ais.coingecko.domain.Exchanges.ExchangesList;
 import com.millerk97.ais.coingecko.domain.Exchanges.ExchangesTickersById;
+import com.millerk97.ais.coingecko.domain.MarketChart.MarketChart;
 import com.millerk97.ais.coingecko.domain.Ping;
 import com.millerk97.ais.coingecko.global.Global;
 
@@ -36,6 +37,8 @@ public interface CoinGeckoApiClient {
     ExchangesTickersById getTickers(String id, int page);
 
     CoinFullData getCoinById(String id);
+
+    MarketChart getMarketChart(String id, String targetCurrency, String from, String to);
 
     void shutdown();
 }

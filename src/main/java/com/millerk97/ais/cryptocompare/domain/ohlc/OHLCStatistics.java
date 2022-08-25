@@ -13,6 +13,10 @@ public class OHLCStatistics {
     int index;
     @JsonProperty("mean_fluctuation")
     double meanFluctuation;
-    @JsonProperty("mean_standard_deviation")
-    double meanStandardDeviation;
+    @JsonProperty("mean_variance")
+    double meanVariance;
+    @JsonProperty("mean_volume")
+    double meanVolume;
+    @JsonProperty("previous close")
+    double previousClosePrice;
 }

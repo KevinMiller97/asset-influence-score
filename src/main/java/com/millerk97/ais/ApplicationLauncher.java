@@ -15,17 +15,7 @@ public class ApplicationLauncher extends Application {
 
     @Override
     public void start(Stage stage) throws IOException {
-
         FlowController.init(stage);
-        /*
-
-
-        FXMLLoader fxmlLoader = new FXMLLoader(ApplicationLauncher.class.getResource("/com/millerk97/fxml/FXBaseApplication.fxml"));
-        Scene scene = new Scene(fxmlLoader.load(), 1280, 800);
-        stage.setTitle("Hello!");
-        stage.setScene(scene);
-        stage.show();
-*/
     }
 
 

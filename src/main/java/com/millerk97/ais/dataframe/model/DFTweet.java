@@ -24,15 +24,19 @@ public class DFTweet {
     PublicMetrics publicMetrics;
     @JsonProperty("conversation_id")
     String conversationId;
-    @JsonProperty("associated_velocity")
-    double associatedVelocity;
+    @JsonProperty("is_original")
+    boolean original;
+    @JsonProperty("associated_outbreak_magnitude")
+    double associatedOutbreakMagnitude;
+    @JsonProperty("engagement_share")
+    double engagementShare;
     // set manually while fetching
     DFUser user;
 
     public DFTweet() {
     }
 
-    public DFTweet(Tweet t, double associatedVelocity) {
+    public DFTweet(Tweet t, double associatedOutbreakMagnitude) {
         id = t.getId();
         text = t.getText();
         createdAt = t.getCreatedAt();
@@ -40,7 +44,8 @@ public class DFTweet {
         entities = t.getEntities();
         publicMetrics = t.getPublicMetrics();
         conversationId = t.getConversationId();
-        this.associatedVelocity = associatedVelocity;
+        original = t.getInReplyToUserId() == null;
+        this.associatedOutbreakMagnitude = associatedOutbreakMagnitude;
 
         DFUser u = new DFUser();
         u.setId(t.getUser().getId());
@@ -50,5 +55,9 @@ public class DFTweet {
         u.setPublicMetrics(t.getUser().getPublicMetrics());
         u.setName(t.getUser().getName());
         user = u;
+    }
+
+    public double calculateEngagement() {
+        return publicMetrics.getLikeCount() + publicMetrics.getRetweetCount() * 2;
     }
 }
