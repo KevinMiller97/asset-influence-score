@@ -29,7 +29,7 @@
                 <Label text="Sliding Window Size"/>
                 <TextField fx:id="slidingWindowSizeInput" prefHeight="25.0" prefWidth="135.0" text="24"/>
                 <Label text="Breakout Threshold"/>
-                <TextField fx:id="breakoutThresholdInput" prefHeight="25.0" prefWidth="135.0" text="5"/>
+                <TextField fx:id="breakoutThresholdInput" prefHeight="25.0" prefWidth="135.0" text="15"/>
                 <Label text="Pearson Correlation Coefficient (to BTC)"/>
                 <TextField fx:id="pccInput" prefHeight="25.0" prefWidth="135.0" text="0.72"/>
             </VBox>
@@ -52,9 +52,9 @@
                     <Label text="Limit results to amount"/>
                     <TextField fx:id="resultLimit" prefHeight="25.0" prefWidth="135.0" text="400"/>
                     <Label text="Minimum tweets per user"/>
-                    <TextField fx:id="minimumTweets" prefHeight="25.0" prefWidth="135.0" text="15"/>
+                    <TextField fx:id="minimumTweets" prefHeight="25.0" prefWidth="135.0" text="10"/>
                     <Label text="Twitter's influence over market (assumption)"/>
-                    <TextField fx:id="twitterInfluenceFactor" prefHeight="25.0" prefWidth="135.0" text="0.7"/>
+                    <TextField fx:id="twitterInfluenceFactor" prefHeight="25.0" prefWidth="135.0" text="0.6"/>
                 </VBox>
             </VBox>
             <Button fx:id="startButton" mnemonicParsing="false" text="Apply &amp; Run"/>

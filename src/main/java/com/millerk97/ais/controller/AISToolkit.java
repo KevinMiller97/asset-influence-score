@@ -20,10 +20,10 @@ import java.util.*;
 
 public class AISToolkit {
 
+    private static String CRYPTOCURRENCY, QUERY, TICKER;
     private final StringProperty messageProperty = new SimpleStringProperty();
     private final int DURATION_OF_HOUR_IN_SECONDS = 3600;
     private boolean PRINT_ANOMALIES;
-    private String CRYPTOCURRENCY, QUERY, TICKER;
     private Long START, END;
     private double BREAKOUT_THRESHOLD;
     private double TWITTER_INFLUENCE_FACTOR;
@@ -37,12 +37,22 @@ public class AISToolkit {
         return calculateCandleVelocity(statisticsPair.getKey()) - statisticsPair.getValue().getMeanFluctuation();
     }
 
+    private static double getAssociatedBitcoinOutbreakMagnitude(Long timestamp) {
+        Dataframe df = DataframeUtil.getDataframe(timestamp, "bitcoin");
+        if (df == null) return 0;
+        return calculateCandleVelocity(df.getOhlc()) / df.getStatistics().getMeanFluctuation();
+    }
+
     public static double calculateOutbreakMagnitude(Pair<OHLC, OHLCStatistics> statisticsPair) {
         return calculateCandleVelocity(statisticsPair.getKey()) / statisticsPair.getValue().getMeanFluctuation();
     }
 
     public static double calculateOutbreakMagnitudeAttributableToExternalFactors(Pair<OHLC, OHLCStatistics> statisticsPair) {
-        return calculateCandleVelocityAttributableToExternalFactors(statisticsPair) / statisticsPair.getValue().getMeanFluctuation();
+        double bitcoinOutbreak = 0;
+        if (!(CRYPTOCURRENCY.equals("Bitcoin") || CRYPTOCURRENCY.equals("Bitcoin"))) {
+            bitcoinOutbreak = getAssociatedBitcoinOutbreakMagnitude(statisticsPair.getKey().getTime());
+        }
+        return (calculateCandleVelocityAttributableToExternalFactors(statisticsPair) - bitcoinOutbreak) / statisticsPair.getValue().getMeanFluctuation();
     }
 
     public void fetchOHLC(boolean reloadOHLC) {
@@ -205,15 +215,15 @@ public class AISToolkit {
     }
 
     public void setCryptocurrency(String cryptocurrency) {
-        this.CRYPTOCURRENCY = cryptocurrency;
+        CRYPTOCURRENCY = cryptocurrency;
     }
 
     public void setQuery(String query) {
-        this.QUERY = query;
+        QUERY = query;
     }
 
     public void setTicker(String ticker) {
-        this.TICKER = ticker;
+        TICKER = ticker;
     }
 
     public void setStart(Long start) {
