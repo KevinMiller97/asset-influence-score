@@ -21,23 +21,18 @@ import java.util.*;
 public class AISToolkit {
 
     private static String CRYPTOCURRENCY, QUERY, TICKER;
+    private static double BREAKOUT_THRESHOLD, PCC, TWITTER_INFLUENCE_FACTOR;
     private final StringProperty messageProperty = new SimpleStringProperty();
     private final int DURATION_OF_HOUR_IN_SECONDS = 3600;
     private boolean PRINT_ANOMALIES;
     private Long START, END;
-    private double BREAKOUT_THRESHOLD;
-    private double TWITTER_INFLUENCE_FACTOR;
     private int WINDOW_SIZE;
 
     public static double calculateCandleVelocity(OHLC ohlc) {
         return (ohlc.getHigh() - ohlc.getLow()) * ohlc.getVolumeTo() / 10000;
     }
 
-    public static double calculateCandleVelocityAttributableToExternalFactors(Pair<OHLC, OHLCStatistics> statisticsPair) {
-        return calculateCandleVelocity(statisticsPair.getKey()) - statisticsPair.getValue().getMeanFluctuation();
-    }
-
-    private static double getAssociatedBitcoinOutbreakMagnitude(Long timestamp) {
+    public static double getAssociatedBitcoinMagnitude(Long timestamp) {
         Dataframe df = DataframeUtil.getDataframe(timestamp, "bitcoin");
         if (df == null) return 0;
         return calculateCandleVelocity(df.getOhlc()) / df.getStatistics().getMeanFluctuation();
@@ -48,11 +43,11 @@ public class AISToolkit {
     }
 
     public static double calculateOutbreakMagnitudeAttributableToExternalFactors(Pair<OHLC, OHLCStatistics> statisticsPair) {
-        double bitcoinOutbreak = 0;
+        double bitcoinMagnitude = 0;
         if (!(CRYPTOCURRENCY.equals("Bitcoin") || CRYPTOCURRENCY.equals("Bitcoin"))) {
-            bitcoinOutbreak = getAssociatedBitcoinOutbreakMagnitude(statisticsPair.getKey().getTime());
+            bitcoinMagnitude = getAssociatedBitcoinMagnitude(statisticsPair.getKey().getTime());
         }
-        return (calculateCandleVelocityAttributableToExternalFactors(statisticsPair) - bitcoinOutbreak) / statisticsPair.getValue().getMeanFluctuation();
+        return calculateCandleVelocity(statisticsPair.getKey()) / statisticsPair.getValue().getMeanFluctuation() - bitcoinMagnitude * PCC;
     }
 
     public void fetchOHLC(boolean reloadOHLC) {
@@ -61,7 +56,22 @@ public class AISToolkit {
         messageProperty.set("OHLC data fetched");
     }
 
-    public List<DFTweet> getTweetsFromTimeframe(Long timestamp) {
+    public List<DFTweet> getTweetsFromDailyTimeframe(Long timestamp) {
+        List<Dataframe> dfs = DataframeUtil.getDataframesForDay(timestamp, CRYPTOCURRENCY);
+        List<DFTweet> tweets = new ArrayList<>();
+        double engagementSum = 0;
+        for (Dataframe df : dfs) {
+            for (DFTweet t : df.getTweets()) {
+                engagementSum += t.calculateEngagement();
+                tweets.add(t);
+            }
+        }
+        double finalEngagementSum = engagementSum;
+        tweets.stream().forEach(t -> t.setEngagementShare(t.calculateEngagement() / finalEngagementSum));
+        return tweets;
+    }
+
+    public List<DFTweet> getTweetsFromHourlyTimeframe(Long timestamp) {
         Dataframe df = DataframeUtil.getDataframe(timestamp, CRYPTOCURRENCY);
         List<DFTweet> tweets = new ArrayList<>();
         double engagementSum = 0;
@@ -216,6 +226,10 @@ public class AISToolkit {
 
     public void setCryptocurrency(String cryptocurrency) {
         CRYPTOCURRENCY = cryptocurrency;
+    }
+
+    public void setPCC(double pcc) {
+        PCC = pcc;
     }
 
     public void setQuery(String query) {

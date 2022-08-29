@@ -46,6 +46,8 @@ public class PriceActionItem extends GridPane {
     @FXML
     private Label magnitudeLabel;
     @FXML
+    private Label bitcoinMagnitudeLabel;
+    @FXML
     private Label magExternalLabel;
     @FXML
     private Button showTweetsButton;
@@ -56,8 +58,8 @@ public class PriceActionItem extends GridPane {
         OHLCStatistics stat = pair.getValue();
         timeframeLabel.setText(timeframe);
         candleOpenLabel.setText(Formatter.formatNumberDecimal(ohlc.getOpen()));
-        candleHighLabel.setText(Formatter.formatNumberDecimal(ohlc.getClose()));
-        candleLowLabel.setText(Formatter.formatNumberDecimal(ohlc.getHigh()));
+        candleHighLabel.setText(Formatter.formatNumberDecimal(ohlc.getHigh()));
+        candleLowLabel.setText(Formatter.formatNumberDecimal(ohlc.getLow()));
         candleCloseLabel.setText(Formatter.formatNumberDecimal(ohlc.getClose()));
         candleVolumeLabel.setText(Formatter.formatNumberDecimal(ohlc.getVolumeTo()));
         priceMoveInPercent.setText(Formatter.formatNumberDecimal((ohlc.getClose() / stat.getPreviousClosePrice() - 1) * 100));
@@ -67,9 +69,8 @@ public class PriceActionItem extends GridPane {
         candleVelocityLabel.setText(Formatter.formatNumberDecimal(AISToolkit.calculateCandleVelocity(ohlc)));
         anomalyThresholdLabel.setText(Formatter.formatNumberDecimal(breakoutThresholdFactor * stat.getMeanFluctuation()));
         magnitudeLabel.setText(Formatter.formatNumberDecimal(AISToolkit.calculateOutbreakMagnitude(pair)));
-        double velocityExternal = AISToolkit.calculateCandleVelocityAttributableToExternalFactors(pair);
-        velocityExternalFactorsLabel.setText(Formatter.formatNumberDecimal(velocityExternal > 0 ? velocityExternal : 0));
         isLabel.setText(Formatter.formatNumberDecimal(currentInfluenceabilityScore));
+        bitcoinMagnitudeLabel.setText(Formatter.formatNumberDecimal(AISToolkit.getAssociatedBitcoinMagnitude(ohlc.getTime())));
         double magExternal = AISToolkit.calculateOutbreakMagnitudeAttributableToExternalFactors(pair);
         magExternalLabel.setText(Formatter.formatNumberDecimal(magExternal > 0 ? magExternal : 0));
         showTweetsButton.setOnAction(action -> showTweetsAction.run());

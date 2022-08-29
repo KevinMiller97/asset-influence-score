@@ -16,6 +16,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,6 +25,7 @@ public class DataframeUtil {
     private static final String PREFIX = "src/main/resources/com/millerk97/dataframes/";
     private static final String SUBDIR = "%s/";
     private static final String FILE_TEMPLATE = "DF_%s_%s.json";
+    private static final int DURATION_DAY = 86400;
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
@@ -74,4 +76,22 @@ public class DataframeUtil {
         }
         return null;
     }
+
+    public static List<Dataframe> getDataframesForDay(Long startTimestamp, String cryptocurrency) {
+        Long currentTimestamp = startTimestamp;
+        List<Dataframe> dataframes = new ArrayList<>();
+        while (currentTimestamp <= startTimestamp + DURATION_DAY) {
+            String fileName = PREFIX + String.format(SUBDIR, cryptocurrency) + String.format(FILE_TEMPLATE, Formatter.formatISO8601(currentTimestamp * 1000).substring(0, 13), Formatter.formatISO8601((currentTimestamp + 3600) * 1000).substring(0, 13));
+            try {
+                if (new File(fileName).exists() && !Files.readString(Path.of(fileName)).isBlank()) {
+                    dataframes.add(mapper.readValue(Files.readString(Path.of(fileName)), Dataframe.class));
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            currentTimestamp += 3600;
+        }
+        return dataframes;
+    }
+
 }

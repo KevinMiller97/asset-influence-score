@@ -31,6 +31,8 @@ public class FXBaseApplication extends StackPane {
     @FXML
     private Button startButton;
     @FXML
+    private Button tradeStrategyButton;
+    @FXML
     private VBox priceActionHighestDailyVelocityContent;
     @FXML
     private VBox priceActionChronologicalDailyContent;
