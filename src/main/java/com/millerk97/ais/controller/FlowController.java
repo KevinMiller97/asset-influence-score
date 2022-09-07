@@ -67,6 +67,14 @@ public class FlowController {
 
         base.getStartButton().setOnAction(action -> {
             initializerThread.setOnFinished(() -> {
+                String bearer;
+                if (base.getBearerToken().getText().equals("")) {
+                    bearer = PropertiesLoader.loadBearerToken();
+                    base.getBearerToken().setText(bearer);
+                } else {
+                    bearer = base.getBearerToken().getText();
+                }
+                TweetFetcher.setBearerToken(bearer);
                 runAISCalculation();
             });
             initializerThread.start();
@@ -91,7 +99,7 @@ public class FlowController {
             aisToolkit.setStart(start);
             aisToolkit.setEnd(TRADE_END);
 
-            applyTrade(windowSize, breakoutThresholdFactor, minimumTweets, false);
+            applyTrade(windowSize, breakoutThresholdFactor, minimumTweets);
         }).start());
         stage.show();
     }
@@ -180,13 +188,7 @@ public class FlowController {
     }
 
     public static void applyTrade(int windowSize, int breakoutThresholdFactor, int minTweets) {
-        applyTrade(windowSize, breakoutThresholdFactor, minTweets, false);
-    }
-
-    public static void applyTrade(int windowSize, int breakoutThresholdFactor, int minTweets, boolean writeAIS) {
         aisToolkit.setBreakoutThreshold(breakoutThresholdFactor);
-        final SimpleDateFormat timestampCreator = new SimpleDateFormat("dd.MM.yyyy");
-
 
         final int limitTopUsers = 8;
         double investorAHoldings = 0.317460;
@@ -260,20 +262,10 @@ public class FlowController {
             dailyTimestamp += 86400;
         }
         try {
-            FileWriter outputfile = new FileWriter(String.format("src/main/resources/com/millerk97/trade/new/jun22_%s_w%d_b%d_t%d.csv", cryptocurrency, windowSize, breakoutThresholdFactor, minTweets));
+            FileWriter outputfile = new FileWriter(String.format("src/main/resources/com/millerk97/trade/%s_%s_%s_w%d_b%d_t%d.csv", Formatter.prettyFormatShort(TRADE_START), Formatter.prettyFormatShort(TRADE_END), cryptocurrency, windowSize, breakoutThresholdFactor, minTweets));
             CSVWriter writer = new CSVWriter(outputfile);
             writer.writeAll(tradingDays);
             writer.close();
-
-            if (writeAIS) {
-                for (String username : aisDevelopment.keySet()) {
-                    FileWriter outputfileAIS = new FileWriter(String.format("src/main/resources/com/millerk97/trade/ais/%s_w%d_b%d_t%d_%s.csv", cryptocurrency, windowSize, breakoutThresholdFactor, minTweets, username));
-                    CSVWriter writerAIS = new CSVWriter(outputfileAIS);
-                    writerAIS.writeAll(aisDevelopment.get(username));
-                    writerAIS.close();
-                }
-            }
-
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -306,8 +298,6 @@ public class FlowController {
         }
 
         AISToolkit.prepareBitcoinMagnitudes(start, end);
-        TweetFetcher.setBearerToken(base.getBearerToken().getText());
-
     }
 
     private static void mapTweetsToUsers() {

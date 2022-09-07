@@ -1,7 +1,11 @@
 package com.millerk97.ais.util;
 
+import com.millerk97.ais.controller.FlowController;
+
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Properties;
 
 public class PropertiesLoader {
@@ -18,5 +22,15 @@ public class PropertiesLoader {
             ex.printStackTrace();
         }
         throw new IOException("Key " + property + " does not exist");
+    }
+
+
+    public static String loadBearerToken() {
+        try {
+            return Files.readString(Path.of("src/main/resources/com/millerk97/bearertoken.txt"));
+        } catch (IOException e) {
+            FlowController.log("Could not retrieve bearer token");
+        }
+        return "";
     }
 }

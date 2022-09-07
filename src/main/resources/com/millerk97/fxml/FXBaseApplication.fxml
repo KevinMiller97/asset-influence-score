@@ -57,8 +57,7 @@
                     <Insets bottom="15.0" left="5.0" right="5.0" top="120.0"/>
                 </padding>
                 <Label text="Bearer Token (Optional):"/>
-                <TextField fx:id="bearerToken"
-                           text="AAAAAAAAAAAAAAAAAAAAAKNLfAEAAAAAgIWEHlNfQ%2Fk5qB6kiXHjhpdFR7Y%3DJhcm50NdhEc4v1j52DAXEBQvjEQLkhRBWLF5ehsY8uOP8E7vht"/>
+                <TextField fx:id="bearerToken"/>
             </VBox>
         </VBox>
         <TabPane layoutX="282.0" layoutY="13.0" prefHeight="769.0" prefWidth="493.0" style="-fx-border-color: BLACK;"
