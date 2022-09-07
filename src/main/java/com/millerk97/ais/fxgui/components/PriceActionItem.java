@@ -34,11 +34,7 @@ public class PriceActionItem extends GridPane {
     @FXML
     private Label meanStandardDeviation;
     @FXML
-    private Label varianceLabel;
-    @FXML
     private Label candleVelocityLabel;
-    @FXML
-    private Label velocityExternalFactorsLabel;
     @FXML
     private Label isLabel;
     @FXML
@@ -65,7 +61,6 @@ public class PriceActionItem extends GridPane {
         priceMoveInPercent.setText(Formatter.formatNumberDecimal((ohlc.getClose() / stat.getPreviousClosePrice() - 1) * 100));
         meanVolumeLabel.setText(Formatter.formatNumberDecimal(stat.getMeanVolume()));
         meanStandardDeviation.setText(Formatter.formatNumberDecimal(stat.getMeanFluctuation()));
-        varianceLabel.setText(Formatter.formatNumberDecimal(stat.getMeanVariance()));
         candleVelocityLabel.setText(Formatter.formatNumberDecimal(AISToolkit.calculateCandleVelocity(ohlc)));
         anomalyThresholdLabel.setText(Formatter.formatNumberDecimal(breakoutThresholdFactor * stat.getMeanFluctuation()));
         magnitudeLabel.setText(Formatter.formatNumberDecimal(AISToolkit.calculateOutbreakMagnitude(pair)));

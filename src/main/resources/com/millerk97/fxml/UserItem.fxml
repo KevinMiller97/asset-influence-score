@@ -23,10 +23,6 @@
         <RowConstraints minHeight="10.0" prefHeight="15.0" vgrow="SOMETIMES"/>
         <RowConstraints minHeight="10.0" prefHeight="15.0" vgrow="SOMETIMES"/>
         <RowConstraints minHeight="10.0" prefHeight="15.0" vgrow="SOMETIMES"/>
-        <RowConstraints minHeight="10.0" prefHeight="15.0" vgrow="SOMETIMES"/>
-        <RowConstraints minHeight="10.0" prefHeight="15.0" vgrow="SOMETIMES"/>
-        <RowConstraints minHeight="10.0" prefHeight="15.0" vgrow="SOMETIMES"/>
-        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
     </rowConstraints>
     <Label text="Username"/>
     <HBox alignment="CENTER_LEFT" spacing="20.0"
@@ -49,20 +45,12 @@
     <Label fx:id="tweetcountAnomalyLabel" GridPane.columnIndex="1" GridPane.rowIndex="5"/>
     <Label text="Anomaly ratio" GridPane.rowIndex="6"/>
     <Label fx:id="anomalyRatioLabel" GridPane.columnIndex="1" GridPane.rowIndex="6"/>
-    <Label text="Average percentage of Engagement in TF" GridPane.rowIndex="7"/>
+    <Label text="Average Engagement Share" GridPane.rowIndex="7"/>
     <Label fx:id="avgEngagementPercentageLabel" GridPane.columnIndex="1" GridPane.rowIndex="7"/>
-    <Label text="Average Price Move Magnitude (in Multiple)" GridPane.rowIndex="8"/>
+    <Label text="Average Total Magnitude" GridPane.rowIndex="8"/>
     <Label fx:id="avgMagnitudeLabel" GridPane.columnIndex="1" GridPane.rowIndex="8"/>
-    <Label text="Average Attributable PMM (acc. to Engagement)" GridPane.rowIndex="9"/>
-    <Label fx:id="avgAttrMagnitudeLabel" GridPane.columnIndex="1" GridPane.rowIndex="9"/>
-    <Label text="Average APMM adj. for Twitter influence" GridPane.rowIndex="10"/>
-    <Label fx:id="avgAttrMagnitudeAdjTwitterLabel" GridPane.columnIndex="1" GridPane.rowIndex="10"/>
-    <Label text="Median Price Move Magnitude (in Multiple)" GridPane.rowIndex="11"/>
-    <Label fx:id="medianMagnitudeLabel" GridPane.columnIndex="1" GridPane.rowIndex="11"/>
-    <Label text="Median Attributable PMM (acc. to Engagement)" GridPane.rowIndex="12"/>
-    <Label fx:id="medianAttrMagnitudeLabel" GridPane.columnIndex="1" GridPane.rowIndex="12"/>
-    <Label text="Median APMM adj. for Twitter influence" GridPane.rowIndex="13"/>
-    <Label fx:id="medianAttrMagnitudeAdjTwitterLabel" GridPane.columnIndex="1" GridPane.rowIndex="13"/>
-    <Label text="AIS" GridPane.rowIndex="14"/>
-    <Label fx:id="aisLabel" GridPane.columnIndex="1" GridPane.rowIndex="14"/>
+    <Label text="Median Attributable Magnitude" GridPane.rowIndex="9"/>
+    <Label fx:id="medianAttrMagnitudeLabel" GridPane.columnIndex="1" GridPane.rowIndex="9"/>
+    <Label text="AIS" GridPane.rowIndex="10"/>
+    <Label fx:id="aisLabel" GridPane.columnIndex="1" GridPane.rowIndex="10"/>
 </fx:root>

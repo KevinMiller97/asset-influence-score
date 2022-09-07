@@ -41,20 +41,18 @@
     <Label fx:id="candleVelocityLabel" GridPane.columnIndex="1" GridPane.rowIndex="7"/>
     <Label text="Mean Volume for current Window" GridPane.rowIndex="8"/>
     <Label fx:id="meanVolumeLabel" GridPane.columnIndex="1" GridPane.rowIndex="8"/>
-    <Label text="Mean Velocity /Volatility for Window" GridPane.rowIndex="9"/>
+    <Label text="Mean Velocity for Window" GridPane.rowIndex="9"/>
     <Label fx:id="meanStandardDeviation" GridPane.columnIndex="1" GridPane.rowIndex="9"/>
-    <Label text="Mean Variance for Window" GridPane.rowIndex="10"/>
-    <Label fx:id="varianceLabel" GridPane.columnIndex="1" GridPane.rowIndex="10"/>
-    <Label text="Current Anomaly Threshold" GridPane.rowIndex="11"/>
-    <Label fx:id="anomalyThresholdLabel" GridPane.columnIndex="1" GridPane.rowIndex="11"/>
-    <Label text="Current Influenceability Score" GridPane.rowIndex="12"/>
-    <Label fx:id="isLabel" GridPane.columnIndex="1" GridPane.rowIndex="12"/>
-    <Label text="Magnitude (in Multiple)" GridPane.rowIndex="13"/>
-    <Label fx:id="magnitudeLabel" GridPane.columnIndex="1" GridPane.rowIndex="13"/>
-    <Label text="Magnitude of Bitcoin" GridPane.rowIndex="14"/>
-    <Label fx:id="bitcoinMagnitudeLabel" GridPane.columnIndex="1" GridPane.rowIndex="14"/>
-    <Label text="Mag attr. to external Factors" GridPane.rowIndex="15"/>
-    <HBox alignment="CENTER_LEFT" spacing="20.0" GridPane.columnIndex="1" GridPane.rowIndex="15">
+    <Label text="Current Anomaly Threshold" GridPane.rowIndex="10"/>
+    <Label fx:id="anomalyThresholdLabel" GridPane.columnIndex="1" GridPane.rowIndex="10"/>
+    <Label text="Current Influenceability Score" GridPane.rowIndex="11"/>
+    <Label fx:id="isLabel" GridPane.columnIndex="1" GridPane.rowIndex="11"/>
+    <Label text="Magnitude (in Multiple)" GridPane.rowIndex="12"/>
+    <Label fx:id="magnitudeLabel" GridPane.columnIndex="1" GridPane.rowIndex="12"/>
+    <Label text="Magnitude of Bitcoin" GridPane.rowIndex="13"/>
+    <Label fx:id="bitcoinMagnitudeLabel" GridPane.columnIndex="1" GridPane.rowIndex="13"/>
+    <Label text="Mag attr. to external Factors" GridPane.rowIndex="14"/>
+    <HBox alignment="CENTER_LEFT" spacing="20.0" GridPane.columnIndex="1" GridPane.rowIndex="14">
         <GridPane.margin>
             <Insets bottom="10.0" top="10.0"/>
         </GridPane.margin>

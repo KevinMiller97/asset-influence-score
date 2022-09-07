@@ -19,4 +19,6 @@ public class OHLCStatistics {
     double meanVolume;
     @JsonProperty("previous close")
     double previousClosePrice;
+    @JsonProperty("bitcoin_magnitude")
+    double bitcoinMagnitude;
 }

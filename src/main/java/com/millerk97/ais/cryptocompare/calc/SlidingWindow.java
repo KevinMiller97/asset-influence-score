@@ -50,7 +50,13 @@ public class SlidingWindow {
                 stats.setMeanFluctuation(calculateMeanFluctuation());
                 stats.setMeanVariance(calculateMeanVariance());
                 stats.setMeanVolume(calculateMeanVolume());
-                stats.setPreviousClosePrice(candles.get(i - 1).getClose());
+                stats.setPreviousClosePrice(0);
+                try {
+                    stats.setPreviousClosePrice(candles.get(i - 1).getClose());
+                } catch (IndexOutOfBoundsException e) {
+                    // the close price is only used for displaying in the client, doesn't break anything
+                }
+                stats.setBitcoinMagnitude(AISToolkit.getAssociatedBitcoinMagnitude(candles.get(i).getTime()));
                 statistics.add(new Pair<>(candles.get(i), stats));
             }
             advanceWindow();

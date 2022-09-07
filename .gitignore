@@ -3,7 +3,4 @@
 *.DS_store
 target/
 
-
-src/main/resources/com/millerk97/ohlc/
-src/main/resources/com/millerk97/dataframes/
-src/main/resources/com/millerk97/tweets/
+src/main/resources/com/millerk97/

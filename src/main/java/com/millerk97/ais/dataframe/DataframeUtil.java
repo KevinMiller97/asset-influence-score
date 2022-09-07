@@ -32,6 +32,7 @@ public class DataframeUtil {
 
     public static void deleteDataframes(String cryptocurrency) {
         File dir = new File(String.format(PREFIX, cryptocurrency) + String.format(SUBDIR, cryptocurrency));
+        dir.mkdirs();
         if (dir != null) {
             FlowController.log(String.format("Deleting %d existing dataframes for %s", dir.listFiles().length, cryptocurrency));
             for (File file : dir.listFiles()) {
@@ -53,7 +54,7 @@ public class DataframeUtil {
                 FileWriter fWriter = new FileWriter(fileName);
                 Dataframe df = new Dataframe();
                 df.setOhlc(ohlc);
-                df.setTweets(tweets.stream().filter(t -> t.getLang().equals("en")).map(t -> new DFTweet(t, AISToolkit.calculateOutbreakMagnitude(new Pair<>(ohlc, statistics)))).sorted((t1, t2) -> -t1.getPublicMetrics().getLikeCount()).collect(Collectors.toList()).toArray(new DFTweet[0]));
+                df.setTweets(tweets.stream().filter(t -> t.getLang().equals("en")).map(t -> new DFTweet(t, AISToolkit.calculateOutbreakMagnitudeAttributableToExternalFactors(new Pair<>(ohlc, statistics)))).sorted((t1, t2) -> -t1.getPublicMetrics().getLikeCount()).collect(Collectors.toList()).toArray(new DFTweet[0]));
                 df.setStatistics(statistics);
                 fWriter.write(mapper.writeValueAsString(df));
                 fWriter.flush();

@@ -24,14 +24,8 @@ public class TwitterApiClientImpl implements TwitterApiClient {
         );
     }
 
-
     @Override
-    public APIResult searchTweets(String query, String startTime_ISO8601, String endTime_ISO8601) {
-        return twitterApi.executeSync(twitterApiService.searchTweets(query, startTime_ISO8601, endTime_ISO8601));
-    }
-
-    @Override
-    public APIResult searchTweets(String query, String startTime_ISO8601, String endTime_ISO8601, String next_token) {
-        return twitterApi.executeSync(twitterApiService.searchTweets(query, startTime_ISO8601, endTime_ISO8601, next_token));
+    public APIResult searchTweets(String bearerToken, String query, String startTime_ISO8601, String endTime_ISO8601) {
+        return twitterApi.executeSync(twitterApiService.searchTweets(String.format("Bearer %s", bearerToken), query, startTime_ISO8601, endTime_ISO8601));
     }
 }

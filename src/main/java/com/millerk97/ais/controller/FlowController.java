@@ -11,6 +11,7 @@ import com.millerk97.ais.fxgui.FXBaseApplication;
 import com.millerk97.ais.fxgui.components.PriceActionItem;
 import com.millerk97.ais.fxgui.components.TweetItem;
 import com.millerk97.ais.fxgui.components.UserItem;
+import com.millerk97.ais.twitter.TweetFetcher;
 import com.millerk97.ais.util.Formatter;
 import com.millerk97.ais.util.PropertiesLoader;
 import com.opencsv.CSVWriter;
@@ -23,11 +24,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class FlowController {
@@ -35,20 +35,16 @@ public class FlowController {
     private static final FXBaseApplication base = new FXBaseApplication();
     private static final Long DURATION_DAY = 86340L; // 23:59
     private static final Long DURATION_HOUR = 3600L;
+    private static final int resultLimit = 400;
     private static AISToolkit aisToolkit;
     private static Long start;
     private static Long end;
-
     private static int breakoutThresholdFactor;
+    private static int minimumTweets;
     private static String cryptocurrency;
     private static double pcc;
-    private static double twitterInfluenceFactor;
-    private static int resultLimit;
-    private static int minTweets;
     private static int windowSize;
-    private static boolean onlyUseOriginalTweets;
-    private static boolean onlyUseVerifiedUsers;
-
+    private static long TRADE_START, TRADE_END = 0L;
 
     public static void init(Stage stage) {
         // necessary because of DST and because Vienna is in GMT+2, all data is provided in GMT
@@ -58,268 +54,54 @@ public class FlowController {
         stage.setHeight(1030);
         stage.setTitle("AIS Calculator");
         stage.setScene(scene);
+
+        ThreadWithOnFinished initializerThread = new ThreadWithOnFinished() {
+            @Override
+            public void doRun() {
+                base.setStatusMessage("Started - Applying configuration and preparing data");
+                initialize();
+                ISCalculator.initialize(cryptocurrency, start, end, base.getReloadOHLC().isSelected());
+                aisToolkit.getMessageProperty().addListener((observableValue, oldValue, message) -> Platform.runLater(() -> base.setStatusMessage(message)));
+            }
+        };
+
         base.getStartButton().setOnAction(action -> {
-            applyConfiguration();
-            run();
+            initializerThread.setOnFinished(() -> {
+                runAISCalculation();
+            });
+            initializerThread.start();
         });
-        base.getTradeStrategyButton().setOnAction(action -> {
-            applyTradeB("src/main/resources/com/millerk97/trade/B_refresh7_breakout8_minT10_2day.csv", 7, 8, 10, 172800);
-            applyTradeB("src/main/resources/com/millerk97/trade/B_refresh3_breakout8_minT10_2day.csv", 3, 8, 10, 172800);
-            applyTradeB("src/main/resources/com/millerk97/trade/B_refresh1_breakout8_minT5_2day.csv", 1, 8, 5, 172800);
-            applyTradeB("src/main/resources/com/millerk97/trade/B_refresh1_breakout8_minT10_2day.csv", 1, 8, 10, 172800);
-            applyTradeB("src/main/resources/com/millerk97/trade/B_refresh1_breakout8_minT5_1day.csv", 1, 8, 5, 86400);
-            applyTradeB("src/main/resources/com/millerk97/trade/B_refresh1_breakout8_minT10_1day.csv", 1, 8, 10, 86400);
-            applyTradeB("src/main/resources/com/millerk97/trade/refresh1_breakout15_minT5_2day.csv", 1, 15, 5, 172800);
-            /*
-            applyTradeB("src/main/resources/com/millerk97/trade/B_refresh7_breakout8_minT5_2day.csv", 7, 8, 5, 172800);
-            applyTradeB("src/main/resources/com/millerk97/trade/B_refresh3_breakout8_minT5_2day.csv", 3, 8, 5, 172800);
 
-            applyTradeB("src/main/resources/com/millerk97/trade/B_refresh7_breakout8_minT10_2day.csv", 7, 8, 10, 172800);
-            applyTradeB("src/main/resources/com/millerk97/trade/B_refresh3_breakout8_minT10_2day.csv", 3, 8, 10, 172800);
+        base.getTradeStrategyButton().setOnAction(action -> new Thread(() -> {
+            final SimpleDateFormat timestampCreator = new SimpleDateFormat("dd.MM.yyyy");
+            try {
+                start = timestampCreator.parse("01.01.2020").getTime() / 1000;
+                TRADE_START = timestampCreator.parse("05.01.2021").getTime() / 1000;
+                TRADE_START = (Timestamp.valueOf(base.getTradeStartPicker().getValue().atStartOfDay()).getTime() / 1000);
+            } catch (ParseException | NullPointerException e) {
+                log("no start date entered - using 05.01.2021 as trade start");
+            }
+            try {
+                TRADE_END = timestampCreator.parse("30.06.2022").getTime() / 1000;
+                TRADE_END = (Timestamp.valueOf(base.getTradeEndPicker().getValue().atStartOfDay()).getTime() / 1000);
+            } catch (ParseException | NullPointerException e) {
+                log("no end date entered - using 30.06.2022 as trade end");
+            }
 
-            applyTradeB("src/main/resources/com/millerk97/trade/B_refresh7_breakout8_minT5_1day.csv", 7, 8, 5, 86400);
-            applyTradeB("src/main/resources/com/millerk97/trade/B_refresh3_breakout8_minT5_1day.csv", 3, 8, 5, 86400);
+            aisToolkit.setStart(start);
+            aisToolkit.setEnd(TRADE_END);
 
-            applyTradeB("src/main/resources/com/millerk97/trade/B_refresh7_breakout8_minT10_1day.csv", 7, 8, 10, 86400);
-            applyTradeB("src/main/resources/com/millerk97/trade/B_refresh3_breakout8_minT10_1day.csv", 3, 8, 10, 86400);
-
-            applyTradeB("src/main/resources/com/millerk97/trade/B_refresh7_breakout15_minT5_2day.csv", 7, 15, 5, 172800);
-            applyTradeB("src/main/resources/com/millerk97/trade/B_refresh3_breakout15_minT5_2day.csv", 3, 15, 5, 172800);
-
-            applyTradeA("src/main/resources/com/millerk97/trade/refresh7_breakout8_minT10.csv", 7, 8, 10);
-            applyTradeA("src/main/resources/com/millerk97/trade/refresh3_breakout8_minT10.csv", 3, 8, 10);
-
-             */
-        });
+            applyTrade(windowSize, breakoutThresholdFactor, minimumTweets, false);
+        }).start());
         stage.show();
     }
 
-    public static void applyTradeB(String FILENAME, int aisRefreshInterval, int breakoutThresholdFactor, int minTweets, int holdDuration) {
-        applyConfiguration();
-        final SimpleDateFormat timestampCreator = new SimpleDateFormat("dd.MM.yyyy");
-        aisToolkit = new AISToolkit();
-        aisToolkit.setCryptocurrency(cryptocurrency);
-        aisToolkit.setTicker(base.getTickerInput().getText());
-        aisToolkit.setQuery(cryptocurrency + " OR " + base.getTickerInput().getText());
-        aisToolkit.setPCC(pcc);
-        aisToolkit.setWindowSize(windowSize);
-        aisToolkit.setBreakoutThreshold(breakoutThresholdFactor);
-        aisToolkit.setTwitterInfluenceFactor(twitterInfluenceFactor);
-        Long TRADE_START = 0L;
-        Long TRADE_END = 0L;
-        try {
-            start = timestampCreator.parse("01.01.2020").getTime() / 1000;
-            end = timestampCreator.parse("01.01.2021").getTime() / 1000;
-            TRADE_START = timestampCreator.parse("01.01.2021").getTime() / 1000;
-            TRADE_END = timestampCreator.parse("31.12.2021").getTime() / 1000;
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-        aisToolkit.setStart(start);
-        aisToolkit.setEnd(end);
 
-
-        double balance = 10000d;
-        double currentHoldings = 0d;
-        final int limitTopUsers = 8;
-        double investorAHoldings = 1000000d;
-        double investorBHoldings = 200000d;
-        double investorCHoldings = 22222d;
-        int counter = 0;
-
-        Long hourlyTimestamp = TRADE_START;
-        Long dailyTimestamp = TRADE_START;
-        Long latestEntry = 0L;
-
-        List<String[]> tradingDays = new ArrayList<>();
-
-        List<TweetMap> tweetMapList = aisToolkit.mapTweetsToUser(onlyUseOriginalTweets).stream().filter(entry -> entry.getTotalTweetCount() > minTweets).filter(entry -> entry.getUser().isVerified()).sorted(Comparator.comparingDouble(o -> -o.getAIS())).limit(limitTopUsers).collect(Collectors.toList());
-
-        while (dailyTimestamp <= TRADE_END) {
-            // current top 5 users tweetmaps by AIS
-            // go over the current day
-            if (counter % aisRefreshInterval == 0) {
-                tweetMapList = aisToolkit.mapTweetsToUser(onlyUseOriginalTweets).stream().filter(entry -> entry.getTotalTweetCount() > minTweets).filter(entry -> entry.getUser().isVerified()).sorted(Comparator.comparingDouble(o -> -o.getAIS())).limit(limitTopUsers).collect(Collectors.toList());
-                System.out.println("Current AIS Leaderboard: ");
-                for (TweetMap tm : tweetMapList) {
-                    System.out.println(String.format("User: %s (%f)", tm.getUser().getUsername(), tm.getAIS()));
-                }
-            }
-            while (hourlyTimestamp + 3600 <= dailyTimestamp + 86400) {
-                Dataframe df = DataframeUtil.getDataframe(hourlyTimestamp, cryptocurrency);
-                // iterate over top 5 users
-                if (df != null) {
-                    for (TweetMap tm : tweetMapList) {
-                        for (DFTweet t : df.getTweets()) {
-                            if (t.getUser().getUsername().equals(tm.getUser().getUsername())) {
-                                // this user tweeted on this day
-                                double availableBudget = balance * tm.getAIS() / 100; // we could go all in here too, TODO add as option potentially
-                                balance -= availableBudget;
-                                double entryPrice = (df.getOhlc().getOpen() + (df.getOhlc().getClose() - df.getOhlc().getOpen()) / 5); // 20% premium
-                                double entryAmount = availableBudget / entryPrice;
-                                currentHoldings += entryAmount;
-                                latestEntry = dailyTimestamp;
-                                System.out.println(String.format("Buying %f Dogecoin at entry price of %f worth %f because %s tweeted at %s", entryAmount, entryPrice, entryAmount * entryPrice, t.getUser().getUsername(), t.getCreatedAt()));
-                            }
-                        }
-                    }
-                }
-                hourlyTimestamp += 3600;
-            }
-            // close open positions
-            Dataframe dfClose = DataframeUtil.getDataframe(hourlyTimestamp, cryptocurrency);
-            System.out.println("____ Balances on: " + Formatter.prettyFormat(dailyTimestamp * 1000));
-            if (dfClose != null) {
-                if (currentHoldings > 0) {
-                    if (dailyTimestamp >= latestEntry + holdDuration) {
-                        double tradeResult = currentHoldings * dfClose.getOhlc().getOpen();
-                        balance += tradeResult;
-                        currentHoldings = 0;
-                        System.out.println(String.format("Selling Dogecoin for %f", tradeResult));
-                    } else {
-                        System.out.println("Holding Dogecoin until " + Formatter.prettyFormat((dailyTimestamp + 172800) * 1000));
-                    }
-                } else {
-                    System.out.println("Nothing to trade from " + Formatter.prettyFormatRange(dailyTimestamp * 1000, (dailyTimestamp + 86340) * 1000));
-                }
-                System.out.println("Investor A: " + investorAHoldings * dfClose.getOhlc().getOpen());
-                System.out.println("Investor B: " + investorBHoldings * dfClose.getOhlc().getOpen());
-                System.out.println("Trader: " + (balance + currentHoldings * dfClose.getOhlc().getOpen()));
-                System.out.println("_________________");
-                tradingDays.add(new String[]{Formatter.prettyFormat(hourlyTimestamp * 1000), round(balance + currentHoldings * dfClose.getOhlc().getOpen(), 2)});
-            } else {
-                System.out.println("dataframe is null");
-            }
-            dailyTimestamp += 86400;
-            aisToolkit.setEnd(dailyTimestamp);
-            counter++;
-        }
-        try {
-            FileWriter outputfile = new FileWriter(FILENAME);
-            CSVWriter writer = new CSVWriter(outputfile);
-            writer.writeAll(tradingDays);
-            writer.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-
+    private static String round(double input) {
+        return String.valueOf(new BigDecimal(input).setScale(2, RoundingMode.HALF_UP).doubleValue());
     }
 
-
-    public static void applyTradeA(String FILENAME, int aisRefreshInterval, int breakoutThresholdFactor, int minTweets) {
-        applyConfiguration();
-        final SimpleDateFormat timestampCreator = new SimpleDateFormat("dd.MM.yyyy");
-        aisToolkit = new AISToolkit();
-        aisToolkit.setCryptocurrency(cryptocurrency);
-        aisToolkit.setTicker(base.getTickerInput().getText());
-        aisToolkit.setQuery(cryptocurrency + " OR " + base.getTickerInput().getText());
-        aisToolkit.setPCC(pcc);
-        aisToolkit.setWindowSize(windowSize);
-        aisToolkit.setBreakoutThreshold(breakoutThresholdFactor);
-        aisToolkit.setTwitterInfluenceFactor(twitterInfluenceFactor);
-        Long TRADE_START = 0L;
-        Long TRADE_END = 0L;
-        try {
-            start = timestampCreator.parse("01.01.2020").getTime() / 1000;
-            end = timestampCreator.parse("01.01.2021").getTime() / 1000;
-            TRADE_START = timestampCreator.parse("01.01.2021").getTime() / 1000;
-            TRADE_END = timestampCreator.parse("31.12.2021").getTime() / 1000;
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-        aisToolkit.setStart(start);
-        aisToolkit.setEnd(end);
-
-
-        double balance = 10000d;
-        double currentHoldings = 0d;
-        final int limitTopUsers = 8;
-        double investorAHoldings = 1000000d;
-        double investorBHoldings = 200000d;
-        double investorCHoldings = 22222d;
-        int counter = 0;
-
-        Long hourlyTimestamp = TRADE_START;
-        Long dailyTimestamp = TRADE_START;
-
-        List<String[]> tradingDays = new ArrayList<>();
-
-        List<TweetMap> tweetMapList = aisToolkit.mapTweetsToUser(onlyUseOriginalTweets).stream().filter(entry -> entry.getTotalTweetCount() > minTweets).filter(entry -> entry.getUser().isVerified()).sorted(Comparator.comparingDouble(o -> -o.getAIS())).limit(limitTopUsers).collect(Collectors.toList());
-
-        while (dailyTimestamp <= TRADE_END) {
-            // current top 5 users tweetmaps by AIS
-            // go over the current day
-            if (counter % aisRefreshInterval == 0) {
-                tweetMapList = aisToolkit.mapTweetsToUser(onlyUseOriginalTweets).stream().filter(entry -> entry.getTotalTweetCount() > minTweets).filter(entry -> entry.getUser().isVerified()).sorted(Comparator.comparingDouble(o -> -o.getAIS())).limit(limitTopUsers).collect(Collectors.toList());
-                System.out.println("Current AIS Leaderboard: ");
-                for (TweetMap tm : tweetMapList) {
-                    System.out.println(String.format("User: %s (%f)", tm.getUser().getUsername(), tm.getAIS()));
-                }
-            }
-            while (hourlyTimestamp + 3600 <= dailyTimestamp + 86400) {
-                Dataframe df = DataframeUtil.getDataframe(hourlyTimestamp, cryptocurrency);
-                // iterate over top 5 users
-                if (df != null) {
-                    for (TweetMap tm : tweetMapList) {
-                        for (DFTweet t : df.getTweets()) {
-                            if (t.getUser().getUsername().equals(tm.getUser().getUsername())) {
-                                if (balance < 0) {
-                                    System.err.println("buggy code bro");
-                                }
-                                // this user tweeted on this day
-                                double availableBudget = balance * tm.getAIS() / 100; // we could go all in here too, TODO add as option potentially
-                                balance -= availableBudget;
-                                double entryPrice = (df.getOhlc().getOpen() + (df.getOhlc().getClose() - df.getOhlc().getOpen()) / 5); // 20% premium
-                                double entryAmount = availableBudget / entryPrice;
-                                currentHoldings += entryAmount;
-                                System.out.println(String.format("Buying %f Dogecoin at entry price of %f worth %f because %s tweeted at %s", entryAmount, entryPrice, entryAmount * entryPrice, t.getUser().getUsername(), t.getCreatedAt()));
-                            }
-                        }
-                    }
-                }
-                hourlyTimestamp += 3600;
-            }
-            // close open positions
-            Dataframe dfClose = DataframeUtil.getDataframe(hourlyTimestamp, cryptocurrency);
-            System.out.println("____ Balances on: " + Formatter.prettyFormat(dailyTimestamp * 1000));
-            if (dfClose != null) {
-                if (currentHoldings > 0) {
-                    double tradeResult = currentHoldings * dfClose.getOhlc().getOpen();
-                    balance += tradeResult;
-                    currentHoldings = 0;
-                    System.out.println(String.format("Selling Dogecoin for %f", tradeResult));
-                } else {
-                    System.out.println("Nothing to trade from " + Formatter.prettyFormatRange(dailyTimestamp * 1000, (dailyTimestamp + 86340) * 1000));
-                }
-                System.out.println("Investor A: " + investorAHoldings * dfClose.getOhlc().getOpen());
-                System.out.println("Investor B: " + investorBHoldings * dfClose.getOhlc().getOpen());
-                System.out.println("Investor C: " + investorCHoldings * dfClose.getOhlc().getOpen());
-                System.out.println("Trader: " + balance);
-                System.out.println("_________________");
-                tradingDays.add(new String[]{Formatter.prettyFormat(hourlyTimestamp * 1000), round(investorAHoldings * dfClose.getOhlc().getOpen(), 2), round(investorBHoldings * dfClose.getOhlc().getOpen(), 2), round(investorCHoldings * dfClose.getOhlc().getOpen(), 2), round(balance, 2), round(dfClose.getOhlc().getOpen(), 7)});
-            } else {
-                System.out.println("dataframe is null");
-            }
-            dailyTimestamp += 86400;
-            aisToolkit.setEnd(dailyTimestamp);
-            counter++;
-        }
-        try {
-            FileWriter outputfile = new FileWriter(FILENAME);
-            CSVWriter writer = new CSVWriter(outputfile);
-            writer.writeAll(tradingDays);
-            writer.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private static String round(double input, int places) {
-        return String.valueOf(new BigDecimal(input).setScale(places, RoundingMode.HALF_UP).doubleValue());
-    }
-
-    public static void run() {
+    public static void runAISCalculation() {
         Platform.runLater(() -> {
             // clear everything in case of multiple executions
             base.getPriceActionHighestDailyVelocityContent().getChildren().clear();
@@ -330,25 +112,7 @@ public class FlowController {
             base.getSelectedTweetContent().getChildren().clear();
         });
 
-        try {
-            initializeAISToolkit();
-        } catch (IOException | ParseException e) {
-            log(e.getMessage());
-            e.printStackTrace();
-        }
-
-
-        aisToolkit.getMessageProperty().addListener((observableValue, oldValue, message) -> Platform.runLater(() -> base.setStatusMessage(message)));
-
         // Threads prevent the GUI from freezing
-        ThreadWithOnFinished exchangeSupportScoreThread = new ThreadWithOnFinished() {
-            @Override
-            public void doRun() {
-                ISCalculator.initialize(cryptocurrency, start, end);
-                setExchangeSupportScore();
-            }
-        };
-
         ThreadWithOnFinished ohlcThread = new ThreadWithOnFinished() {
             @Override
             public void doRun() {
@@ -393,12 +157,11 @@ public class FlowController {
             }
         };
 
-        exchangeSupportScoreThread.setOnFinished(ohlcThread::start);
 
         ohlcThread.setOnFinished(() -> {
-            if (base.getFetchTweetsFromApi().isSelected())
+            if (base.getFetchTweetsFromApi().isSelected()) {
                 tweetFetchingThread.start();
-            else dataframeThread.start();
+            } else dataframeThread.start();
         });
 
         tweetFetchingThread.setOnFinished(dataframeThread::start);
@@ -408,30 +171,122 @@ public class FlowController {
             tweetMappingThread.start();
         });
 
-        exchangeSupportScoreThread.start();
+        ohlcThread.start();
     }
-
-    private static void applyConfiguration() {
-        breakoutThresholdFactor = Integer.parseInt(base.getBreakoutThresholdInput().getText());
-        cryptocurrency = base.getCryptocurrencyInput().getText();
-        pcc = Double.parseDouble(base.getPccInput().getText());
-        twitterInfluenceFactor = Double.parseDouble(base.getTwitterInfluenceFactor().getText());
-        resultLimit = Integer.parseInt(base.getResultLimit().getText());
-        minTweets = Integer.parseInt(base.getMinimumTweets().getText());
-        windowSize = Integer.parseInt(base.getSlidingWindowSizeInput().getText());
-        twitterInfluenceFactor = Double.parseDouble(base.getTwitterInfluenceFactor().getText());
-        onlyUseOriginalTweets = base.getOnlyUseOriginalTweets().isSelected();
-        onlyUseVerifiedUsers = base.getOnlyUseVerifiedUsers().isSelected();
-        base.setStatusMessage("Started");
-    }
-
 
     public static void log(String log) {
         System.out.println(log);
         base.log(log);
     }
 
-    private static void initializeAISToolkit() throws IOException, ParseException {
+    public static void applyTrade(int windowSize, int breakoutThresholdFactor, int minTweets) {
+        applyTrade(windowSize, breakoutThresholdFactor, minTweets, false);
+    }
+
+    public static void applyTrade(int windowSize, int breakoutThresholdFactor, int minTweets, boolean writeAIS) {
+        aisToolkit.setBreakoutThreshold(breakoutThresholdFactor);
+        final SimpleDateFormat timestampCreator = new SimpleDateFormat("dd.MM.yyyy");
+
+
+        final int limitTopUsers = 8;
+        double investorAHoldings = 0.317460;
+        double investorBHoldings = 200000d;
+
+        Long hourlyTimestamp = TRADE_START;
+        long dailyTimestamp = TRADE_START;
+
+        List<String[]> tradingDays = new ArrayList<>();
+        List<TweetMap> tweetMapList;
+
+        List<Trader> traders = new ArrayList<>();
+        traders.add(new Trader(0L));
+        traders.add(new Trader(86400L));
+        traders.add(new Trader(172800L));
+        traders.add(new Trader(259200L));
+        traders.add(new Trader(604800L));
+        traders.add(new Trader(1209600L));
+
+        Map<String, List<String[]>> aisDevelopment = new HashMap<>();
+
+        while (dailyTimestamp <= TRADE_END) {
+            tweetMapList = aisToolkit.mapTweetsToUser(true, dailyTimestamp).stream().filter(entry -> entry.getTotalTweetCount() >= minTweets).filter(entry -> entry.getUser().isVerified()).filter(entry -> entry.getAIS() > 0).sorted(Comparator.comparingDouble(o -> -o.getAIS())).limit(limitTopUsers).collect(Collectors.toList());
+            System.out.println("Current AIS Leaderboard:");
+            for (TweetMap tm : tweetMapList) {
+                String username = tm.getUser().getUsername();
+                System.out.println(String.format("%s, %s", username, tm.getAIS()));
+                aisDevelopment.computeIfAbsent(username, k -> new ArrayList<>());
+                aisDevelopment.get(username).add(new String[]{Formatter.prettyFormatShort(dailyTimestamp * 1000), round(tm.getAIS())});
+            }
+            while (hourlyTimestamp + 3600 <= dailyTimestamp + 86400) {
+                Dataframe df = DataframeUtil.getDataframe(hourlyTimestamp, cryptocurrency);
+                // iterate over top 5 users
+                if (df != null) {
+                    for (TweetMap tm : tweetMapList) {
+                        for (DFTweet t : df.getTweets()) {
+                            if (t.getUser().getUsername().equals(tm.getUser().getUsername())) {
+                                // this user tweeted on this day
+                                double entryPrice = (df.getOhlc().getOpen() + (df.getOhlc().getClose() - df.getOhlc().getOpen()) / 5); // 20% premium
+                                for (Trader trader : traders) {
+                                    double availableBudget = trader.balance * tm.getAIS() / 100;
+                                    trader.balance -= availableBudget;
+                                    double entryAmount = availableBudget / entryPrice;
+                                    trader.currentHoldings += entryAmount;
+                                    trader.latestEntry = dailyTimestamp;
+                                }
+                                log(String.format("Buying at entry price of %f because %s tweeted at %s", entryPrice, t.getUser().getUsername(), t.getCreatedAt()));
+                            }
+                        }
+                    }
+                }
+                hourlyTimestamp += 3600;
+            }
+            // close open positions
+            Dataframe dfClose = DataframeUtil.getDataframe(hourlyTimestamp, cryptocurrency);
+            if (dfClose != null) {
+                for (Trader t : traders) {
+                    if (t.currentHoldings > 0) {
+                        if (dailyTimestamp >= t.latestEntry + t.holdDuration) {
+                            double tradeResult = t.currentHoldings * dfClose.getOhlc().getOpen();
+                            t.balance += tradeResult;
+                            t.currentHoldings = 0;
+                        }
+                    }
+                }
+                String[] tradingDayResults = {Formatter.prettyFormatShort(hourlyTimestamp * 1000), round(investorAHoldings * dfClose.getOhlc().getOpen()), round(investorBHoldings * dfClose.getOhlc().getOpen()), round(traders.get(0).balance + traders.get(0).currentHoldings * dfClose.getOhlc().getOpen()), round(traders.get(1).balance + traders.get(1).currentHoldings * dfClose.getOhlc().getOpen()), round(traders.get(2).balance + traders.get(2).currentHoldings * dfClose.getOhlc().getOpen()), round(traders.get(3).balance + traders.get(3).currentHoldings * dfClose.getOhlc().getOpen()), round(traders.get(4).balance + traders.get(4).currentHoldings * dfClose.getOhlc().getOpen()), round(traders.get(5).balance + traders.get(5).currentHoldings * dfClose.getOhlc().getOpen())};
+
+                log(String.format("%s, (Inv A) %s, (Inv B) %s, (EOD) %s, (1D) %s, (2D) %s, (3D) %s, (1W) %s, (2W) %s", tradingDayResults));
+                tradingDays.add(tradingDayResults);
+            }
+            dailyTimestamp += 86400;
+        }
+        try {
+            FileWriter outputfile = new FileWriter(String.format("src/main/resources/com/millerk97/trade/new/jun22_%s_w%d_b%d_t%d.csv", cryptocurrency, windowSize, breakoutThresholdFactor, minTweets));
+            CSVWriter writer = new CSVWriter(outputfile);
+            writer.writeAll(tradingDays);
+            writer.close();
+
+            if (writeAIS) {
+                for (String username : aisDevelopment.keySet()) {
+                    FileWriter outputfileAIS = new FileWriter(String.format("src/main/resources/com/millerk97/trade/ais/%s_w%d_b%d_t%d_%s.csv", cryptocurrency, windowSize, breakoutThresholdFactor, minTweets, username));
+                    CSVWriter writerAIS = new CSVWriter(outputfileAIS);
+                    writerAIS.writeAll(aisDevelopment.get(username));
+                    writerAIS.close();
+                }
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void initialize() {
+        final SimpleDateFormat timestampCreator = new SimpleDateFormat("dd.MM.yyyy");
+        breakoutThresholdFactor = Integer.parseInt(base.getBreakoutThresholdInput().getText());
+        cryptocurrency = base.getCryptocurrencyInput().getText();
+        pcc = Double.parseDouble(base.getPccInput().getText());
+        windowSize = Integer.parseInt(base.getSlidingWindowSizeInput().getText());
+        minimumTweets = Integer.parseInt(base.getMinimumTweets().getText());
+
         aisToolkit = new AISToolkit();
         aisToolkit.setCryptocurrency(cryptocurrency);
         aisToolkit.setTicker(base.getTickerInput().getText());
@@ -439,34 +294,24 @@ public class FlowController {
         aisToolkit.setPCC(pcc);
         aisToolkit.setWindowSize(windowSize);
         aisToolkit.setBreakoutThreshold(breakoutThresholdFactor);
-        aisToolkit.setTwitterInfluenceFactor(twitterInfluenceFactor);
-        // TODO REMOVE, don't want to enter manually every time
-        final SimpleDateFormat timestampCreator = new SimpleDateFormat("dd.MM.yyyy");
-        start = timestampCreator.parse(PropertiesLoader.loadProperty("start")).getTime() / 1000;
-        end = timestampCreator.parse(PropertiesLoader.loadProperty("end")).getTime() / 1000;
-        aisToolkit.setStart(start);
-        aisToolkit.setEnd(end);
+        try {
+            start = timestampCreator.parse(PropertiesLoader.loadProperty("start")).getTime() / 1000;
+            aisToolkit.setStart(start);
+            end = timestampCreator.parse(PropertiesLoader.loadProperty("end")).getTime() / 1000;
+            aisToolkit.setEnd(end);
+            end = Timestamp.valueOf(base.getAisDatePicker().getValue().atStartOfDay()).getTime() / 1000;
+            aisToolkit.setEnd(end);
+        } catch (IOException | ParseException e) {
+            log(e.getMessage());
+        }
 
-        /*
-        aisToolkit.setStart(Timestamp.valueOf(base.getStartdatePicker().getValue().atStartOfDay()).getTime() / 1000);
-        aisToolkit.setEnd(Timestamp.valueOf(base.getEnddatePicker().getValue().atStartOfDay()).getTime() / 1000);
+        AISToolkit.prepareBitcoinMagnitudes(start, end);
+        TweetFetcher.setBearerToken(base.getBearerToken().getText());
 
-         */
-
-    }
-
-    private static void setExchangeSupportScore() {
-        Platform.runLater(() -> {
-            base.getEssLabel().setText(String.valueOf(ISCalculator.calculateExchangeSupportScore(cryptocurrency)));
-        });
     }
 
     private static void mapTweetsToUsers() {
-        List<TweetMap> tweetMapList = aisToolkit.mapTweetsToUser(onlyUseOriginalTweets).stream().filter(entry -> entry.getTotalTweetCount() > Integer.parseInt(base.getMinimumTweets().getText())).sorted(Comparator.comparingDouble(o -> -o.getAIS())).limit(resultLimit).collect(Collectors.toList());
-
-        if (onlyUseVerifiedUsers) {
-            tweetMapList = tweetMapList.stream().filter(entry -> entry.getUser().isVerified()).collect(Collectors.toList());
-        }
+        List<TweetMap> tweetMapList = aisToolkit.mapTweetsToUser(true, end).stream().filter(entry -> entry.getTotalTweetCount() > minimumTweets).filter(entry -> entry.getUser().isVerified()).sorted(Comparator.comparingDouble(o -> -o.getAIS())).limit(resultLimit).toList();
 
         for (TweetMap user : tweetMapList) {
             Platform.runLater(() -> base.getUserContent().getChildren().add(createUserItem(user)));
@@ -476,7 +321,7 @@ public class FlowController {
     private static PriceActionItem createPriceActionItem(Pair<OHLC, OHLCStatistics> pair, Long timestampRange, boolean daily) {
         OHLC ohlc = pair.getKey();
 
-        return new PriceActionItem(pair, Formatter.prettyFormatRange(ohlc.getTime() * 1000, (ohlc.getTime() + timestampRange) * 1000), breakoutThresholdFactor, aisToolkit.isAnomaly(pair), true, ISCalculator.calculateInfluenceabilityScore(cryptocurrency, pcc, ohlc.getTime()), () -> new Thread(() -> fillTweetsFromTimeframe(ohlc.getTime(), daily)).start());
+        return new PriceActionItem(pair, Formatter.prettyFormatRange(ohlc.getTime() * 1000, (ohlc.getTime() + timestampRange) * 1000), breakoutThresholdFactor, aisToolkit.isAnomaly(pair), true, ISCalculator.calculateInfluenceabilityScore(pcc, ohlc.getTime()), () -> new Thread(() -> fillTweetsFromTimeframe(ohlc.getTime(), daily)).start());
     }
 
     private static UserItem createUserItem(TweetMap tweetMap) {
@@ -506,7 +351,6 @@ public class FlowController {
         }
     }
 
-
     private static void fillHighestVelocityPriceAction(boolean daily) {
         for (Pair<OHLC, OHLCStatistics> stats : aisToolkit.getCandlesSortedByOutbreakMagnitude(daily).stream().limit(resultLimit).toList()) {
             Platform.runLater(() -> {
@@ -526,6 +370,17 @@ public class FlowController {
                 else
                     base.getPriceActionChronologicalHourlyContent().getChildren().add(createPriceActionItem(stats, DURATION_HOUR, true));
             });
+        }
+    }
+
+    static class Trader {
+        public final Long holdDuration;
+        public double balance = 10000d;
+        public double currentHoldings = 0d;
+        public Long latestEntry = 0L;
+
+        public Trader(Long holdDuration) {
+            this.holdDuration = holdDuration;
         }
     }
 

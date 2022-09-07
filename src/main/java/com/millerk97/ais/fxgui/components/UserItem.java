@@ -32,15 +32,7 @@ public class UserItem extends GridPane {
     @FXML
     private Label avgMagnitudeLabel;
     @FXML
-    private Label avgAttrMagnitudeLabel;
-    @FXML
-    private Label avgAttrMagnitudeAdjTwitterLabel;
-    @FXML
-    private Label medianMagnitudeLabel;
-    @FXML
     private Label medianAttrMagnitudeLabel;
-    @FXML
-    private Label medianAttrMagnitudeAdjTwitterLabel;
     @FXML
     private Label aisLabel;
     @FXML
@@ -57,11 +49,7 @@ public class UserItem extends GridPane {
         anomalyRatioLabel.setText(Formatter.formatNumberDecimal(tweetMap.getAnomalyRatio()));
         avgEngagementPercentageLabel.setText(Formatter.formatNumberDecimal(tweetMap.getAvgEngagement() * 100));
         avgMagnitudeLabel.setText(Formatter.formatNumberDecimal(tweetMap.getAvgMagnitude()));
-        avgAttrMagnitudeLabel.setText(Formatter.formatNumberDecimal(tweetMap.getAvgAttributableMagnitude()));
-        avgAttrMagnitudeAdjTwitterLabel.setText(Formatter.formatNumberDecimal(tweetMap.getAvgAttributableMagnitudeAdjustedForTwitterInfluence()));
-        medianMagnitudeLabel.setText(Formatter.formatNumberDecimal(tweetMap.getMedianMagnitude()));
         medianAttrMagnitudeLabel.setText(Formatter.formatNumberDecimal(tweetMap.getMedianAttributableMagnitude()));
-        medianAttrMagnitudeAdjTwitterLabel.setText(Formatter.formatNumberDecimal(tweetMap.getMedianAttributableMagnitudeAdjustedForTwitterInfluence()));
         aisLabel.setText(Formatter.formatNumberDecimal(tweetMap.getAIS()));
         showTweetsButton.setOnAction(action -> onShowTweetsAction.run());
         if (user.isVerified()) {

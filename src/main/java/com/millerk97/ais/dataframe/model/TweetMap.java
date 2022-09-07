@@ -12,15 +12,13 @@ public class TweetMap {
     private DFUser user;
     private double anomalyTweetCount = 0;
     private double regularTweetCount = 0;
-    private double magnitude = 0;
-    private double breakoutThreshold = 0;
-    private double twitterInfluenceFactor = 0;
+    private double totalAttributableMagnitude = 0;
+    private double breakoutThreshold;
     private List<DFTweet> tweets = new ArrayList<>();
 
-    public TweetMap(DFUser user, double breakoutThreshold, double twitterInfluenceFactor) {
+    public TweetMap(DFUser user, double breakoutThreshold) {
         this.user = user;
         this.breakoutThreshold = breakoutThreshold;
-        this.twitterInfluenceFactor = twitterInfluenceFactor;
     }
 
     public void incrementAnomalyTweetCount() {
@@ -31,8 +29,8 @@ public class TweetMap {
         regularTweetCount++;
     }
 
-    public void addToMagnitude(double magnitude) {
-        this.magnitude += magnitude;
+    public void addToTotalAttributableMagnitude(double magnitude) {
+        this.totalAttributableMagnitude += magnitude;
     }
 
     public double getTotalTweetCount() {
@@ -40,11 +38,7 @@ public class TweetMap {
     }
 
     public double getAvgMagnitude() {
-        return magnitude / getTotalTweetCount();
-    }
-
-    public double getWeightedAvgMagnitude() {
-        return getAvgMagnitude() * getAnomalyRatio();
+        return totalAttributableMagnitude / getTotalTweetCount();
     }
 
     public double getAvgEngagement() {
@@ -64,21 +58,9 @@ public class TweetMap {
         return getMedianMagnitude() * ((sorted.get((sorted.size() / 2) - 1).getEngagementShare() + sorted.get(sorted.size() / 2).getEngagementShare() + sorted.get((sorted.size() / 2) + 1).getEngagementShare()) / 3);
     }
 
-    public double getMedianAttributableMagnitudeAdjustedForTwitterInfluence() {
-        return getMedianAttributableMagnitude() * twitterInfluenceFactor;
-    }
-
-    public double getAvgAttributableMagnitude() {
-        return getAvgMagnitude() * getAvgEngagement();
-    }
-
-    public double getAvgAttributableMagnitudeAdjustedForTwitterInfluence() {
-        return getAvgAttributableMagnitude() * twitterInfluenceFactor;
-    }
-
     public double getAIS() {
         double aisTemp = (getMedianAttributableMagnitude() / breakoutThreshold) * 100;
-        return aisTemp > 100 ? 100 * getAnomalyRatio() : aisTemp;
+        return aisTemp > 100 ? 100 * getAnomalyRatio() : aisTemp > 0 ? aisTemp : 0;
     }
 
     public double getAnomalyRatio() {

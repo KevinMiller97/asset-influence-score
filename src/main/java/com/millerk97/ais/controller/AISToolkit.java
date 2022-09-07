@@ -20,10 +20,12 @@ import java.util.*;
 
 public class AISToolkit {
 
+    private static final Map<Long, Double> bitcoinMagnitudes = new HashMap<>();
+    private static final int DURATION_OF_HOUR_IN_SECONDS = 3600;
     private static String CRYPTOCURRENCY, QUERY, TICKER;
-    private static double BREAKOUT_THRESHOLD, PCC, TWITTER_INFLUENCE_FACTOR;
+    private static double BREAKOUT_THRESHOLD, PCC;
     private final StringProperty messageProperty = new SimpleStringProperty();
-    private final int DURATION_OF_HOUR_IN_SECONDS = 3600;
+    private final Map<Long, Dataframe> dataframes = new HashMap<>();
     private boolean PRINT_ANOMALIES;
     private Long START, END;
     private int WINDOW_SIZE;
@@ -33,9 +35,7 @@ public class AISToolkit {
     }
 
     public static double getAssociatedBitcoinMagnitude(Long timestamp) {
-        Dataframe df = DataframeUtil.getDataframe(timestamp, "bitcoin");
-        if (df == null) return 0;
-        return calculateCandleVelocity(df.getOhlc()) / df.getStatistics().getMeanFluctuation();
+        return CRYPTOCURRENCY.equalsIgnoreCase("bitcoin") ? 0 : bitcoinMagnitudes.get(timestamp) != null ? bitcoinMagnitudes.get(timestamp) : 0;
     }
 
     public static double calculateOutbreakMagnitude(Pair<OHLC, OHLCStatistics> statisticsPair) {
@@ -43,11 +43,18 @@ public class AISToolkit {
     }
 
     public static double calculateOutbreakMagnitudeAttributableToExternalFactors(Pair<OHLC, OHLCStatistics> statisticsPair) {
-        double bitcoinMagnitude = 0;
-        if (!(CRYPTOCURRENCY.equals("Bitcoin") || CRYPTOCURRENCY.equals("Bitcoin"))) {
-            bitcoinMagnitude = getAssociatedBitcoinMagnitude(statisticsPair.getKey().getTime());
+        return calculateCandleVelocity(statisticsPair.getKey()) / statisticsPair.getValue().getMeanFluctuation() - statisticsPair.getValue().getBitcoinMagnitude() * PCC;
+    }
+
+    public static void prepareBitcoinMagnitudes(Long start, Long end) {
+        long currentTimestamp = start;
+        while (currentTimestamp + DURATION_OF_HOUR_IN_SECONDS <= end) {
+            Dataframe df = DataframeUtil.getDataframe(currentTimestamp, "bitcoin");
+            if (df != null) {
+                bitcoinMagnitudes.put(currentTimestamp, calculateCandleVelocity(df.getOhlc()) / df.getStatistics().getMeanFluctuation());
+            }
+            currentTimestamp += DURATION_OF_HOUR_IN_SECONDS;
         }
-        return calculateCandleVelocity(statisticsPair.getKey()) / statisticsPair.getValue().getMeanFluctuation() - bitcoinMagnitude * PCC;
     }
 
     public void fetchOHLC(boolean reloadOHLC) {
@@ -85,42 +92,54 @@ public class AISToolkit {
         return tweets;
     }
 
-    public List<TweetMap> mapTweetsToUser(boolean onlyUseOriginalTweets) {
-        messageProperty.set("Mapping Tweets");
+    private void fetchDataframes() {
         long currentTimestamp = START + DURATION_OF_HOUR_IN_SECONDS;
+        while (currentTimestamp + DURATION_OF_HOUR_IN_SECONDS <= END) {
+            Dataframe df = DataframeUtil.getDataframe(currentTimestamp, CRYPTOCURRENCY);
+            if (df != null)
+                dataframes.put(currentTimestamp, df);
+            currentTimestamp += DURATION_OF_HOUR_IN_SECONDS;
+        }
+    }
+
+    public List<TweetMap> mapTweetsToUser(boolean onlyUseOriginalTweets, Long endOfMapping) {
+        messageProperty.set("Mapping Tweets");
         List<OHLC> anomalies = findPriceActionAnomalies();
         Map<String, TweetMap> map = new HashMap<>();
+        if (dataframes.size() == 0) {
+            // first call, subsequent will be faster
+            fetchDataframes();
+        }
 
-        while (currentTimestamp + DURATION_OF_HOUR_IN_SECONDS <= END) {
-            messageProperty.set("Mapping date: " + Formatter.prettyFormat(currentTimestamp * 1000));
-            Dataframe df = DataframeUtil.getDataframe(currentTimestamp, CRYPTOCURRENCY);
-            if (df == null) {
-                /*
-                FlowController.log("Dataframe for Timestamp " + currentTimestamp + "(" + TimeFormatter.formatISO8601(currentTimestamp * 1000) + ") is null");
-                 */
+        long currentTimestamp = START + DURATION_OF_HOUR_IN_SECONDS;
+
+        while (currentTimestamp + DURATION_OF_HOUR_IN_SECONDS <= endOfMapping) {
+            try {
+                Dataframe df = dataframes.get(currentTimestamp);
+                double engagementSum = 0;
+                for (DFTweet t : df.getTweets()) {
+                    engagementSum += !onlyUseOriginalTweets || t.isOriginal() ? t.calculateEngagement() : 0;
+                }
+                for (DFTweet t : df.getTweets()) {
+                    String key = t.getUser().getUsername();
+                    if (map.get(key) == null) {
+                        map.put(key, new TweetMap(t.getUser(), BREAKOUT_THRESHOLD));
+                    }
+                    TweetMap tm = map.get(key);
+                    if (t.isOriginal() || !onlyUseOriginalTweets) {
+                        if (anomalies.contains(df.getOhlc())) {
+                            tm.incrementAnomalyTweetCount();
+                        } else tm.incrementRegularTweetCount();
+                        tm.addToTotalAttributableMagnitude(calculateOutbreakMagnitudeAttributableToExternalFactors(new Pair<>(df.getOhlc(), df.getStatistics())));
+                        t.setEngagementShare(t.calculateEngagement() / engagementSum);
+                        tm.getTweets().add(t);
+                    }
+                }
                 currentTimestamp += DURATION_OF_HOUR_IN_SECONDS;
-                continue;
+            } catch (NullPointerException e) {
+                // continue if DF does not exist
+                currentTimestamp += DURATION_OF_HOUR_IN_SECONDS;
             }
-            double engagementSum = 0;
-            for (DFTweet t : df.getTweets()) {
-                engagementSum += !onlyUseOriginalTweets || t.isOriginal() ? t.calculateEngagement() : 0;
-            }
-            for (DFTweet t : df.getTweets()) {
-                String key = t.getUser().getUsername();
-                if (map.get(key) == null) {
-                    map.put(key, new TweetMap(t.getUser(), BREAKOUT_THRESHOLD, TWITTER_INFLUENCE_FACTOR));
-                }
-                TweetMap tm = map.get(key);
-                if (t.isOriginal() || !onlyUseOriginalTweets) {
-                    if (anomalies.contains(df.getOhlc())) {
-                        tm.incrementAnomalyTweetCount();
-                    } else tm.incrementRegularTweetCount();
-                    tm.addToMagnitude(calculateOutbreakMagnitude(new Pair<>(df.getOhlc(), df.getStatistics())));
-                    t.setEngagementShare(t.calculateEngagement() / engagementSum);
-                    tm.getTweets().add(t);
-                }
-            }
-            currentTimestamp += DURATION_OF_HOUR_IN_SECONDS;
         }
         messageProperty.set("Mapping Tweets Finished");
         return new ArrayList<>(map.keySet().stream().map(map::get).toList());
@@ -262,9 +281,5 @@ public class AISToolkit {
 
     public StringProperty getMessageProperty() {
         return messageProperty;
-    }
-
-    public void setTwitterInfluenceFactor(double twitterInfluenceFactor) {
-        TWITTER_INFLUENCE_FACTOR = twitterInfluenceFactor;
     }
 }

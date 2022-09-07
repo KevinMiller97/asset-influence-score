@@ -27,6 +27,7 @@ public class TweetFetcher {
 
     private static final TwitterApiClient api = new TwitterApiClientImpl();
     private static final ObjectMapper mapper = new ObjectMapper();
+    private static String bearerToken;
 
     public static void moveAndRename() {
         File dirold = new File("src/main/resources/com/millerk97/tweets/v2/");
@@ -58,7 +59,7 @@ public class TweetFetcher {
             } else {
                 FlowController.log(String.format("Fetching Tweets from API: \"%s\" | From: %s   To: %s", query, from_iso8601, to_iso8601));
                 List<Tweet> tweets = new ArrayList<>();
-                APIResult apiResult = api.searchTweets(query, from_iso8601, to_iso8601);
+                APIResult apiResult = api.searchTweets(bearerToken, query, from_iso8601, to_iso8601);
                 // make effectively final for this iteration
                 APIResult finalApiResult = apiResult;
                 // filter out all tweets with 0 likes
@@ -89,5 +90,9 @@ public class TweetFetcher {
     private static Tweet mapUser(Tweet t, User u) {
         t.setUser(u);
         return t;
+    }
+
+    public static void setBearerToken(String bearerToken) {
+        TweetFetcher.bearerToken = bearerToken;
     }
 }

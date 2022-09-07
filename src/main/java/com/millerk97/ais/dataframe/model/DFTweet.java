@@ -3,7 +3,6 @@ package com.millerk97.ais.dataframe.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.millerk97.ais.twitter.data.Tweet;
-import com.millerk97.ais.twitter.data.entities.Entities;
 import com.millerk97.ais.twitter.data.metrics.PublicMetrics;
 import lombok.Data;
 
@@ -18,12 +17,8 @@ public class DFTweet {
     String createdAt;
     @JsonProperty("author_id")
     String authorId;
-    @JsonProperty("entities")
-    Entities entities;
     @JsonProperty("public_metrics")
     PublicMetrics publicMetrics;
-    @JsonProperty("conversation_id")
-    String conversationId;
     @JsonProperty("is_original")
     boolean original;
     @JsonProperty("associated_outbreak_magnitude")
@@ -41,9 +36,7 @@ public class DFTweet {
         text = t.getText();
         createdAt = t.getCreatedAt();
         authorId = t.getAuthorId();
-        entities = t.getEntities();
         publicMetrics = t.getPublicMetrics();
-        conversationId = t.getConversationId();
         original = t.getInReplyToUserId() == null;
         this.associatedOutbreakMagnitude = associatedOutbreakMagnitude;
 

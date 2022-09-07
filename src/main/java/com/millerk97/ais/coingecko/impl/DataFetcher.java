@@ -26,7 +26,6 @@ public class DataFetcher {
     private static final String COIN_FULLDATA = "%s_fulldata.json";
     private static final String EXCHANGES_LIST = "exchanges_list.json";
     private static final String EXCHANGES = "exchanges.json";
-    private static final String GLOBAL = "global.json";
     private static final String COIN_MCAP = "%s_mcap.json";
     private static final String GLOBAL_MCAP = "global_mcap.csv";
     private static final Long DURATION_DAY = 86400L;
@@ -35,34 +34,10 @@ public class DataFetcher {
     private static final ObjectMapper mapper = new ObjectMapper();
     private static Optional<CoinFullData> fullDataOptional = Optional.empty();
 
-    public static Set<Exchanges> getSupportedExchanges(String cryptocurrency) {
-        fetchCoinFullData(cryptocurrency.toLowerCase(), false);
+    public static Set<Exchanges> getSupportedExchanges(String cryptocurrency, boolean reload) {
+        fetchCoinFullData(cryptocurrency.toLowerCase(), reload);
         return fetchExchanges().stream().filter(exchange -> getSupportedExchangeIds().contains(exchange.getId())).collect(Collectors.toSet());
     }
-
-    /*
-    public static double getMarketCap(String cryptocurrency, boolean forceReload) {
-        String fileName = PREFIX + String.format(COIN_MCAP, cryptocurrency);
-        try {
-            if (new File(fileName).exists() && !forceReload) {
-                return Double.parseDouble(Files.readString(Path.of(fileName)));
-            } else {
-                FileWriter fWriter = new FileWriter(fileName);
-                System.out.println("Fetching Market cap for " + cryptocurrency + " from API");
-                double mcap = api.getPrice(cryptocurrency, "usd", true, false, false, false).get(cryptocurrency).get("usd_market_cap");
-                fWriter.write("" + mcap);
-                fWriter.flush();
-                fWriter.close();
-                System.out.println("Created Market cap local store for " + cryptocurrency);
-                return mcap;
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return 0;
-    }
-
-     */
 
     /* currently only take binance, as I deem it most trustworthy */
     public static Ticker getMostRelevantTradingPair(String ticker) {
@@ -70,18 +45,23 @@ public class DataFetcher {
         return fullDataOptional.get().getTickers().stream().filter(t -> t.getBase().equals(ticker)).filter(t -> t.getTarget().equals("USDT")).sorted(Comparator.reverseOrder()).filter(t -> t.getMarket().getName().equals("Binance")).toList().get(0);
     }
 
-    /*
-    public static double getGlobalMarketCap(boolean forceReload) {
-        return fetchGlobalMarketCap(forceReload).getData().getTotalMarketCap().get("usd");
+    public static MarketChart getMarketChart(String cryptocurrency) {
+        String fileName = PREFIX + String.format(COIN_MCAP, cryptocurrency.toLowerCase());
+        try {
+            if (new File(fileName).exists()) {
+                return mapper.readValue(Files.readString(Path.of(fileName)), MarketChart.class);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return new MarketChart();
     }
 
-     */
-
-    public static MarketChart fetchMarketCap(String cryptocurrency, Long from, Long to) {
+    public static MarketChart fetchMarketCap(String cryptocurrency, Long from, Long to, boolean reload) {
         String fileName = PREFIX + String.format(COIN_MCAP, cryptocurrency.toLowerCase());
         MarketChart marketChart;
         try {
-            if (new File(fileName).exists() && !Files.readString(Path.of(fileName)).isBlank()) {
+            if (new File(fileName).exists() && !Files.readString(Path.of(fileName)).isBlank() && !reload) {
                 System.out.println("Fetching market cap data for " + cryptocurrency + " from local storage");
                 marketChart = mapper.readValue(Files.readString(Path.of(fileName)), MarketChart.class);
             } else {
@@ -100,22 +80,10 @@ public class DataFetcher {
         return marketChart;
     }
 
-    public static MarketChart getMarketChart(String cryptocurrency) {
-        String fileName = PREFIX + String.format(COIN_MCAP, cryptocurrency.toLowerCase());
-        try {
-            if (new File(fileName).exists()) {
-                return mapper.readValue(Files.readString(Path.of(fileName)), MarketChart.class);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return new MarketChart();
-    }
-
     public static double getMarketCap(MarketChart marketChart, Long timestamp) {
         for (String[] entry : marketChart.getMcaps()) {
             Long ts = Long.parseLong(entry[0]) / 1000;
-            Double value = Double.parseDouble(entry[1]);
+            double value = Double.parseDouble(entry[1]);
             if (timestamp >= ts && timestamp <= ts + DURATION_DAY) {
                 return value;
             }
@@ -167,31 +135,6 @@ public class DataFetcher {
         return values;
     }
 
-    /*
-    private static Global fetchGlobalMarketCap(boolean forceReload) {
-        String fileName = PREFIX + GLOBAL;
-        Global global;
-        try {
-            if (new File(fileName).exists() && !forceReload) {
-                System.out.println("Fetching Global market cap from local storage");
-                global = mapper.readValue(Files.readString(Path.of(fileName)), Global.class);
-            } else {
-                FileWriter fWriter = new FileWriter(fileName);
-                System.out.println("Global market cap not stored locally, fetching from API");
-                global = api.getGlobal();
-                fWriter.write(mapper.writeValueAsString(global));
-                fWriter.flush();
-                fWriter.close();
-                System.out.println("Created Full Data local store for global market cap");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            return new Global();
-        }
-        return global;
-    }
-
-     */
 
     private static void fetchCoinFullData(String cryptocurrency, boolean forceReload) {
         String fileName = PREFIX + String.format(COIN_FULLDATA, cryptocurrency);

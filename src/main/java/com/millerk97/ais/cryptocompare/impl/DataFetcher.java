@@ -41,6 +41,8 @@ public class DataFetcher {
     private static void fetchDailyOHLC(String cryptocurrency, Ticker tradingPair, Integer before, boolean forceReload) {
         String fileNameDaily = getFileNameDaily(cryptocurrency, tradingPair);
         File dir = new File(PREFIX + String.format(DAILY_DIR, cryptocurrency));
+        // makes sure the directory exists, doesn't do anything if it already does
+        dir.mkdirs();
         if (forceReload && dir != null) {
             for (File file : dir.listFiles()) {
                 file.delete();
@@ -53,8 +55,7 @@ public class DataFetcher {
         }
 
         try {
-            // makes sure the directory exists, doesn't do anything if it already does
-            dir.mkdirs();
+
             FileWriter fWriter = new FileWriter(fileNameDaily);
             FlowController.log(String.format("Fetching Daily OHLC data from cryptocompare API | Exchange: %s, Base: %s, Target: %s, Before Timestamp %s", tradingPair.getMarket().getName(), tradingPair.getBase(), tradingPair.getTarget(), before));
             APIResult result = api.getDailyOHLC(tradingPair.getMarket().getName(), tradingPair.getBase(), tradingPair.getTarget(), DAILY_LIMIT, before);
@@ -72,6 +73,8 @@ public class DataFetcher {
         String fileNameHourly = getFileNameHourly(cryptocurrency, tradingPair);
 
         File dir = new File(PREFIX + String.format(HOURLY_DIR, cryptocurrency));
+        // makes sure the directory exists, doesn't do anything if it already does
+        dir.mkdirs();
         if (forceReload && dir != null) {
             for (File file : dir.listFiles()) {
                 file.delete();

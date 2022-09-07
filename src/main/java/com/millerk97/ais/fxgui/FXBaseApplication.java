@@ -25,11 +25,13 @@ public class FXBaseApplication extends StackPane {
     @FXML
     private TextField pccInput;
     @FXML
-    private DatePicker startdatePicker;
-    @FXML
-    private DatePicker enddatePicker;
+    private DatePicker aisDatePicker;
     @FXML
     private Button startButton;
+    @FXML
+    private DatePicker tradeStartPicker;
+    @FXML
+    private DatePicker tradeEndPicker;
     @FXML
     private Button tradeStrategyButton;
     @FXML
@@ -55,19 +57,11 @@ public class FXBaseApplication extends StackPane {
     @FXML
     private CheckBox reloadOHLC;
     @FXML
-    private CheckBox onlyUseVerifiedUsers;
-    @FXML
-    private CheckBox onlyUseOriginalTweets;
-    @FXML
-    private TextField resultLimit;
-    @FXML
     private TextField minimumTweets;
     @FXML
-    private TextField twitterInfluenceFactor;
+    private TextField bearerToken;
     @FXML
     private Label statusMessage;
-    @FXML
-    private Label essLabel;
 
     public FXBaseApplication() {
         ScreenHelper.loadFXML(this, this);
