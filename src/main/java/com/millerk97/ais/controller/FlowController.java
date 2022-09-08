@@ -71,12 +71,10 @@ public class FlowController {
             TweetFetcher.setBearerToken(bearer);
         };
 
-        base.getStartButton().setOnAction(action -> {
-            new Thread(() -> {
-                setup.run();
-                runAISCalculation();
-            }).start();
-        });
+        base.getStartButton().setOnAction(action -> new Thread(() -> {
+            setup.run();
+            runAISCalculation();
+        }).start());
 
         base.getTradeStrategyButton().setOnAction(action -> new Thread(() -> {
             setup.run();
@@ -193,7 +191,7 @@ public class FlowController {
         double investorAHoldings = 0.317460;
         double investorBHoldings = 200000d;
 
-        Long hourlyTimestamp = TRADE_START;
+        long hourlyTimestamp = TRADE_START;
         long dailyTimestamp = TRADE_START;
 
         List<String[]> tradingDays = new ArrayList<>();
