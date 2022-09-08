@@ -27,7 +27,7 @@ public class DataFetcher {
     private static final String EXCHANGES_LIST = "exchanges_list.json";
     private static final String EXCHANGES = "exchanges.json";
     private static final String COIN_MCAP = "%s_mcap.json";
-    private static final String GLOBAL_MCAP = "global_mcap.csv";
+    private static final String GLOBAL_MCAP = "global_mcap.csv"; /*https://messari.io/asset/bitcoin/historical*/
     private static final Long DURATION_DAY = 86400L;
 
     private static final CoinGeckoApiClient api = new CoinGeckoApiClientImpl();

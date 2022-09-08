@@ -20,6 +20,7 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.util.Pair;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -262,6 +263,7 @@ public class FlowController {
             dailyTimestamp += 86400;
         }
         try {
+            new File("src/main/resources/com/millerk97/trade/").mkdirs();
             FileWriter outputfile = new FileWriter(String.format("src/main/resources/com/millerk97/trade/%s_%s_%s_w%d_b%d_t%d.csv", Formatter.prettyFormatShort(TRADE_START), Formatter.prettyFormatShort(TRADE_END), cryptocurrency, windowSize, breakoutThresholdFactor, minTweets));
             CSVWriter writer = new CSVWriter(outputfile);
             writer.writeAll(tradingDays);
