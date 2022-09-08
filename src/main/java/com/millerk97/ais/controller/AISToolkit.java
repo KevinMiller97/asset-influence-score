@@ -176,8 +176,16 @@ public class AISToolkit {
                     tweets = TweetFetcher.fetchTweets(CRYPTOCURRENCY, QUERY, Formatter.formatISO8601(currentTimestamp * 1000), Formatter.formatISO8601((currentTimestamp + DURATION_OF_HOUR_IN_SECONDS) * 1000));
                 } catch (TwitterApiException e) {
                     try {
-                        FlowController.log("API limit reached, waiting 2 minutes for retry");
-                        Thread.sleep(120000);
+                        if (e.getError().equals(401)){
+                            FlowController.log("INVALID BEARER TOKEN!");
+                            return;
+                        } if (e.getError().equals(429)){
+                            FlowController.log("API limit reached, waiting 2 minutes for retry");
+                            Thread.sleep(120000);
+                        } else {
+                            FlowController.log(e.getMessage());
+                            Thread.sleep(15000);
+                        }
                     } catch (InterruptedException ex) {
                         ex.printStackTrace();
                     }

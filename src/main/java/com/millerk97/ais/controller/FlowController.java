@@ -56,32 +56,30 @@ public class FlowController {
         stage.setTitle("AIS Calculator");
         stage.setScene(scene);
 
-        ThreadWithOnFinished initializerThread = new ThreadWithOnFinished() {
-            @Override
-            public void doRun() {
-                base.setStatusMessage("Started - Applying configuration and preparing data");
-                initialize();
-                ISCalculator.initialize(cryptocurrency, start, end, base.getReloadOHLC().isSelected());
-                aisToolkit.getMessageProperty().addListener((observableValue, oldValue, message) -> Platform.runLater(() -> base.setStatusMessage(message)));
+        Runnable setup = () -> {
+            base.setStatusMessage("Started - Applying configuration and preparing data");
+            initialize();
+            ISCalculator.initialize(cryptocurrency, start, end, base.getReloadOHLC().isSelected());
+            aisToolkit.getMessageProperty().addListener((observableValue, oldValue, message) -> Platform.runLater(() -> base.setStatusMessage(message)));
+            String bearer;
+            if (base.getBearerToken().getText().equals("")) {
+                bearer = PropertiesLoader.loadBearerToken();
+                base.getBearerToken().setText(bearer);
+            } else {
+                bearer = base.getBearerToken().getText();
             }
+            TweetFetcher.setBearerToken(bearer);
         };
 
         base.getStartButton().setOnAction(action -> {
-            initializerThread.setOnFinished(() -> {
-                String bearer;
-                if (base.getBearerToken().getText().equals("")) {
-                    bearer = PropertiesLoader.loadBearerToken();
-                    base.getBearerToken().setText(bearer);
-                } else {
-                    bearer = base.getBearerToken().getText();
-                }
-                TweetFetcher.setBearerToken(bearer);
+            new Thread(() -> {
+                setup.run();
                 runAISCalculation();
-            });
-            initializerThread.start();
+            }).start();
         });
 
         base.getTradeStrategyButton().setOnAction(action -> new Thread(() -> {
+            setup.run();
             final SimpleDateFormat timestampCreator = new SimpleDateFormat("dd.MM.yyyy");
             try {
                 start = timestampCreator.parse("01.01.2020").getTime() / 1000;
