@@ -160,7 +160,30 @@ public class AISToolkit {
             OHLC ohlc = pair.getKey();
             OHLCStatistics stats = pair.getValue();
             messageProperty.set("Creating Dataframe for " + Formatter.prettyFormat(ohlc.getTime() * 1000));
-            DataframeUtil.storeDataframe(CRYPTOCURRENCY, ohlc, stats, TweetFetcher.fetchTweets(CRYPTOCURRENCY, QUERY, Formatter.formatISO8601(ohlc.getTime() * 1000), Formatter.formatISO8601((ohlc.getTime() + DURATION_OF_HOUR_IN_SECONDS) * 1000)));
+            List<Tweet> tweets = null;
+            while (tweets == null) {
+                try {
+                    // throws ApiException if too many tweets were fetched in a short period of time, repeat fetching for each timeframe so it doesn't skip anything
+                    tweets = TweetFetcher.fetchTweets(CRYPTOCURRENCY, QUERY, Formatter.formatISO8601(ohlc.getTime() * 1000), Formatter.formatISO8601((ohlc.getTime() + DURATION_OF_HOUR_IN_SECONDS) * 1000));
+                } catch (TwitterApiException e) {
+                    try {
+                        if (e.getError().equals(401)) {
+                            FlowController.log("INVALID BEARER TOKEN!");
+                            return;
+                        }
+                        if (e.getError().equals(429)) {
+                            FlowController.log("API limit reached, waiting 2 minutes for retry");
+                            Thread.sleep(120000);
+                        } else {
+                            FlowController.log(e.getMessage());
+                            Thread.sleep(15000);
+                        }
+                    } catch (InterruptedException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            }
+            DataframeUtil.storeDataframe(CRYPTOCURRENCY, ohlc, stats, tweets);
         }
         messageProperty.set("Dataframes created");
     }
@@ -176,10 +199,11 @@ public class AISToolkit {
                     tweets = TweetFetcher.fetchTweets(CRYPTOCURRENCY, QUERY, Formatter.formatISO8601(currentTimestamp * 1000), Formatter.formatISO8601((currentTimestamp + DURATION_OF_HOUR_IN_SECONDS) * 1000));
                 } catch (TwitterApiException e) {
                     try {
-                        if (e.getError().equals(401)){
+                        if (e.getError().equals(401)) {
                             FlowController.log("INVALID BEARER TOKEN!");
                             return;
-                        } if (e.getError().equals(429)){
+                        }
+                        if (e.getError().equals(429)) {
                             FlowController.log("API limit reached, waiting 2 minutes for retry");
                             Thread.sleep(120000);
                         } else {

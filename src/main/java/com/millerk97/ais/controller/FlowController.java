@@ -125,7 +125,7 @@ public class FlowController {
 
         ExecutorService executorService = Executors.newCachedThreadPool();
 
-        CountDownLatch preparationLatch = new CountDownLatch(5);
+        CountDownLatch preparationLatch = new CountDownLatch(4);
         // OHLC
         executorService.submit(() -> {
             aisToolkit.fetchOHLC(base.getReloadOHLC().isSelected());
@@ -140,13 +140,6 @@ public class FlowController {
         executorService.submit(() -> {
             if (!cryptocurrency.equalsIgnoreCase("bitcoin")) {
                 AISToolkit.prepareBitcoinMagnitudes(start, end);
-            }
-            preparationLatch.countDown();
-        });
-        // Tweet Fetching
-        executorService.submit(() -> {
-            if (base.getFetchTweetsFromApi().isSelected()) {
-                aisToolkit.fetchAllTweetsFromStartToEnd();
             }
             preparationLatch.countDown();
         });
@@ -294,7 +287,6 @@ public class FlowController {
         } catch (IOException | ParseException e) {
             log(e.getMessage());
         }
-        AISToolkit.prepareBitcoinMagnitudes(start, end);
     }
 
     private static void mapTweetsToUsers() {
