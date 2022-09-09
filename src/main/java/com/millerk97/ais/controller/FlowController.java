@@ -29,6 +29,9 @@ import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 public class FlowController {
@@ -59,7 +62,6 @@ public class FlowController {
         Runnable setup = () -> {
             base.setStatusMessage("Started - Applying configuration and preparing data");
             initialize();
-            ISCalculator.initialize(cryptocurrency, start, end, base.getReloadOHLC().isSelected());
             aisToolkit.getMessageProperty().addListener((observableValue, oldValue, message) -> Platform.runLater(() -> base.setStatusMessage(message)));
             String bearer;
             if (base.getBearerToken().getText().equals("")) {
@@ -73,7 +75,11 @@ public class FlowController {
 
         base.getStartButton().setOnAction(action -> new Thread(() -> {
             setup.run();
-            runAISCalculation();
+            try {
+                runAISCalculation();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }).start());
 
         base.getTradeStrategyButton().setOnAction(action -> new Thread(() -> {
@@ -106,7 +112,7 @@ public class FlowController {
         return String.valueOf(new BigDecimal(input).setScale(2, RoundingMode.HALF_UP).doubleValue());
     }
 
-    public static void runAISCalculation() {
+    public static void runAISCalculation() throws InterruptedException {
         Platform.runLater(() -> {
             // clear everything in case of multiple executions
             base.getPriceActionHighestDailyVelocityContent().getChildren().clear();
@@ -117,66 +123,60 @@ public class FlowController {
             base.getSelectedTweetContent().getChildren().clear();
         });
 
-        // Threads prevent the GUI from freezing
-        ThreadWithOnFinished ohlcThread = new ThreadWithOnFinished() {
-            @Override
-            public void doRun() {
-                aisToolkit.fetchOHLC(base.getReloadOHLC().isSelected());
+        ExecutorService executorService = Executors.newCachedThreadPool();
+
+        CountDownLatch preparationLatch = new CountDownLatch(5);
+        // OHLC
+        executorService.submit(() -> {
+            aisToolkit.fetchOHLC(base.getReloadOHLC().isSelected());
+            preparationLatch.countDown();
+        });
+        // IS Calculator
+        executorService.submit(() -> {
+            ISCalculator.initialize(cryptocurrency, start, end, base.getReloadOHLC().isSelected());
+            preparationLatch.countDown();
+        });
+        // Bitcoin Dataframes
+        executorService.submit(() -> {
+            if (!cryptocurrency.equalsIgnoreCase("bitcoin")) {
+                AISToolkit.prepareBitcoinMagnitudes(start, end);
             }
-        };
-
-        ThreadWithOnFinished tweetFetchingThread = new ThreadWithOnFinished() {
-            @Override
-            public void doRun() {
-                if (base.getFetchTweetsFromApi().isSelected()) {
-                    aisToolkit.fetchAllTweetsFromStartToEnd();
-                }
-            }
-        };
-
-        ThreadWithOnFinished dataframeThread = new ThreadWithOnFinished() {
-            @Override
-            public void doRun() {
-                if (base.getCreateDataframes().isSelected()) {
-                    aisToolkit.deleteDataframes();
-                    aisToolkit.createDataframes();
-                }
-            }
-        };
-
-        ThreadWithOnFinished priceActionThread = new ThreadWithOnFinished() {
-            @Override
-            public void doRun() {
-                base.setStatusMessage("Filling Price Action Data");
-                fillHighestVelocityPriceAction(true);
-                fillHighestVelocityPriceAction(false);
-                fillChronologicalPriceAction(true);
-                fillChronologicalPriceAction(false);
-            }
-        };
-
-        ThreadWithOnFinished tweetMappingThread = new ThreadWithOnFinished() {
-            @Override
-            public void doRun() {
-                mapTweetsToUsers();
-            }
-        };
-
-
-        ohlcThread.setOnFinished(() -> {
+            preparationLatch.countDown();
+        });
+        // Tweet Fetching
+        executorService.submit(() -> {
             if (base.getFetchTweetsFromApi().isSelected()) {
-                tweetFetchingThread.start();
-            } else dataframeThread.start();
+                aisToolkit.fetchAllTweetsFromStartToEnd();
+            }
+            preparationLatch.countDown();
         });
-
-        tweetFetchingThread.setOnFinished(dataframeThread::start);
-
-        dataframeThread.setOnFinished(() -> {
-            priceActionThread.start();
-            tweetMappingThread.start();
+        // Dateframe deletion
+        executorService.submit(() -> {
+            if (base.getCreateDataframes().isSelected()) {
+                aisToolkit.deleteDataframes();
+            }
+            preparationLatch.countDown();
         });
+        preparationLatch.await();
 
-        ohlcThread.start();
+        CountDownLatch dataframeLatch = new CountDownLatch(1);
+        executorService.submit(() -> {
+            if (base.getCreateDataframes().isSelected()) {
+                aisToolkit.createDataframes();
+            }
+            dataframeLatch.countDown();
+        });
+        dataframeLatch.await();
+
+        // no more latches for GUI
+        executorService.submit(() -> {
+            base.setStatusMessage("Filling Price Action Data");
+            fillHighestVelocityPriceAction(true);
+            fillHighestVelocityPriceAction(false);
+            fillChronologicalPriceAction(true);
+            fillChronologicalPriceAction(false);
+        });
+        executorService.submit(() -> mapTweetsToUsers());
     }
 
     public static void log(String log) {
@@ -294,7 +294,6 @@ public class FlowController {
         } catch (IOException | ParseException e) {
             log(e.getMessage());
         }
-
         AISToolkit.prepareBitcoinMagnitudes(start, end);
     }
 
