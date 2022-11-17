@@ -34,14 +34,12 @@ public class DataFetcher {
     private static final ObjectMapper mapper = new ObjectMapper();
     private static Optional<CoinFullData> fullDataOptional = Optional.empty();
 
-    public static Set<Exchanges> getSupportedExchanges(String cryptocurrency, boolean reload) {
-        fetchCoinFullData(cryptocurrency.toLowerCase(), reload);
+    public static Set<Exchanges> getSupportedExchanges() {
         return fetchExchanges().stream().filter(exchange -> getSupportedExchangeIds().contains(exchange.getId())).collect(Collectors.toSet());
     }
 
     /* currently only take binance, as I deem it most trustworthy */
     public static Ticker getMostRelevantTradingPair(String ticker) {
-        fetchCoinFullData(ticker, false);
         return fullDataOptional.get().getTickers().stream().filter(t -> t.getBase().equals(ticker)).filter(t -> t.getTarget().equals("USDT")).sorted(Comparator.reverseOrder()).filter(t -> t.getMarket().getName().equals("Binance")).toList().get(0);
     }
 
@@ -136,21 +134,22 @@ public class DataFetcher {
     }
 
 
-    private static void fetchCoinFullData(String cryptocurrency, boolean forceReload) {
+    public static void fetchCoinFullData(String cryptocurrency, boolean forceReload) {
         String fileName = PREFIX + String.format(COIN_FULLDATA, cryptocurrency);
         try {
             if (new File(fileName).exists() && !forceReload) {
+                System.out.println(fileName);
                 fullDataOptional = Optional.of(mapper.readValue(Files.readString(Path.of(fileName)), CoinFullData.class));
             } else {
                 FileWriter fWriter = new FileWriter(fileName);
                 System.out.println("Full Data for " + cryptocurrency + " not stored locally, fetching from API");
                 try {
-                    fullDataOptional = Optional.of(api.getCoinById(cryptocurrency));
+                    fullDataOptional = Optional.of(api.getCoinById(cryptocurrency.toLowerCase()));
                     // add additional tickers beyond 100 to ensure good coverage
-                    fullDataOptional.get().getTickers().addAll(api.getTickers(cryptocurrency, 2).getTickers());
-                    fullDataOptional.get().getTickers().addAll(api.getTickers(cryptocurrency, 3).getTickers());
+                    fullDataOptional.get().getTickers().addAll(api.getTickers(cryptocurrency.toLowerCase(), 2).getTickers());
+                    fullDataOptional.get().getTickers().addAll(api.getTickers(cryptocurrency.toLowerCase(), 3).getTickers());
                 } catch (CoinGeckoApiException e) {
-                    // ignore, no more pages
+                    System.out.println(e.getMessage());
                 }
                 fWriter.write(mapper.writeValueAsString(fullDataOptional.get()));
                 fWriter.flush();

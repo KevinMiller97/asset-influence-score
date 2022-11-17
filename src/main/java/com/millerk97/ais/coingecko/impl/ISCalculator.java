@@ -18,10 +18,11 @@ public class ISCalculator {
     private static double ESS;
 
     public static void initialize(String cryptocurrency, Long from, Long to, boolean reload) {
+        DataFetcher.fetchCoinFullData(cryptocurrency, reload);
         DataFetcher.fetchMarketCap(cryptocurrency, from, to, reload);
         marketChart = DataFetcher.getMarketChart(cryptocurrency.toLowerCase());
         globalMarketCapData = DataFetcher.fetchGlobalMarketCap(from, to);
-        ESS = calculateExchangeSupportScore(cryptocurrency, reload);
+        ESS = calculateExchangeSupportScore();
     }
 
     public static double calculateInfluenceabilityScore(double pcc, Long timestamp) {
@@ -34,13 +35,9 @@ public class ISCalculator {
         return String.format("([%s{ESS}/%.4f{MCR}]/%s{PCC})/1000 = %.4f", ESS, mcr, pcc, is);
     }
 
-    public static double calculateExchangeSupportScore(String cryptocurrency) {
-        return calculateExchangeSupportScore(cryptocurrency, false);
-    }
 
-
-    public static double calculateExchangeSupportScore(String cryptocurrency, boolean reload) {
-        return DataFetcher.getSupportedExchanges(cryptocurrency, reload).stream().sorted(Comparator.comparingInt(Exchanges::getTrustScoreRank)).limit(THRESHOLD).mapToDouble(e -> (THRESHOLD - e.getTrustScoreRank())).sum() / MAX_ESS;
+    public static double calculateExchangeSupportScore() {
+        return DataFetcher.getSupportedExchanges().stream().sorted(Comparator.comparingInt(Exchanges::getTrustScoreRank)).limit(THRESHOLD).mapToDouble(e -> (THRESHOLD - e.getTrustScoreRank())).sum() / MAX_ESS;
     }
 
     public static double calculateMCR(Long timestamp) {

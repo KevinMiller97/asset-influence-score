@@ -19,14 +19,16 @@
                 <TextField fx:id="tickerInput" prefHeight="25.0" prefWidth="135.0" text="DOGE"/>
                 <Label text="Sliding Window Size"/>
                 <TextField fx:id="slidingWindowSizeInput" prefHeight="25.0" prefWidth="135.0" text="48"/>
-                <Label text="Breakout Threshold"/>
+                <Label text="Breakout Threshold Factor"/>
                 <TextField fx:id="breakoutThresholdInput" prefHeight="25.0" prefWidth="135.0" text="2"/>
                 <Label text="Minimum tweets per user"/>
                 <TextField fx:id="minimumTweets" prefHeight="25.0" prefWidth="135.0" text="3"/>
                 <Label text="Pearson Correlation Coefficient (to BTC)"/>
                 <TextField fx:id="pccInput" prefHeight="25.0" prefWidth="135.0" text="0.72"/>
-                <Label text="Compute AIS for date:"/>
-                <DatePicker fx:id="aisDatePicker"/>
+                <Label text="Timeframe start:"/>
+                <DatePicker fx:id="aisStartDatePicker"/>
+                <Label text="Timeframe end:"/>
+                <DatePicker fx:id="aisEndDatePicker"/>
             </VBox>
             <Separator prefWidth="200.0"/>
             <VBox spacing="3.0">

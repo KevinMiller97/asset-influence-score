@@ -25,7 +25,9 @@ public class FXBaseApplication extends StackPane {
     @FXML
     private TextField pccInput;
     @FXML
-    private DatePicker aisDatePicker;
+    private DatePicker aisStartDatePicker;
+    @FXML
+    private DatePicker aisEndDatePicker;
     @FXML
     private Button startButton;
     @FXML

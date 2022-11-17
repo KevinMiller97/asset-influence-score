@@ -124,16 +124,18 @@ public class FlowController {
         });
 
         ExecutorService executorService = Executors.newCachedThreadPool();
-
-        CountDownLatch preparationLatch = new CountDownLatch(4);
-        // OHLC
-        executorService.submit(() -> {
-            aisToolkit.fetchOHLC(base.getReloadOHLC().isSelected());
-            preparationLatch.countDown();
-        });
+        CountDownLatch isLatch = new CountDownLatch(1);
         // IS Calculator
         executorService.submit(() -> {
             ISCalculator.initialize(cryptocurrency, start, end, base.getReloadOHLC().isSelected());
+            isLatch.countDown();
+        });
+        isLatch.await();
+
+        CountDownLatch preparationLatch = new CountDownLatch(2);
+        // OHLC
+        executorService.submit(() -> {
+            aisToolkit.fetchOHLC(base.getReloadOHLC().isSelected());
             preparationLatch.countDown();
         });
         // Bitcoin Dataframes
@@ -146,7 +148,7 @@ public class FlowController {
         // Dateframe deletion
         executorService.submit(() -> {
             if (base.getCreateDataframes().isSelected()) {
-                aisToolkit.deleteDataframes();
+                //    aisToolkit.deleteDataframes();
             }
             preparationLatch.countDown();
         });
@@ -181,7 +183,7 @@ public class FlowController {
         aisToolkit.setBreakoutThreshold(breakoutThresholdFactor);
 
         final int limitTopUsers = 8;
-        double investorAHoldings = 0.317460;
+        double investorAHoldings = 58824; // 10000 at 0.17 cents
         double investorBHoldings = 200000d;
 
         long hourlyTimestamp = TRADE_START;
@@ -282,7 +284,9 @@ public class FlowController {
             aisToolkit.setStart(start);
             end = timestampCreator.parse(PropertiesLoader.loadProperty("end")).getTime() / 1000;
             aisToolkit.setEnd(end);
-            end = Timestamp.valueOf(base.getAisDatePicker().getValue().atStartOfDay()).getTime() / 1000;
+            start = Timestamp.valueOf(base.getAisStartDatePicker().getValue().atStartOfDay()).getTime() / 1000;
+            aisToolkit.setStart(start);
+            end = Timestamp.valueOf(base.getAisEndDatePicker().getValue().atStartOfDay()).getTime() / 1000;
             aisToolkit.setEnd(end);
         } catch (IOException | ParseException e) {
             log(e.getMessage());
